@@ -1,1 +1,1 @@
-include ':braillelib', ':speechlib'
+include ':braillelib', ':speechlib', ':svgparser'

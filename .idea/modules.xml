@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/braillelib/braillelib.iml" filepath="$PROJECT_DIR$/braillelib/braillelib.iml" />
       <module fileurl="file://$PROJECT_DIR$/linespace-android.iml" filepath="$PROJECT_DIR$/linespace-android.iml" />
       <module fileurl="file://$PROJECT_DIR$/speechlib/speechlib.iml" filepath="$PROJECT_DIR$/speechlib/speechlib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/svgparser/svgparser.iml" filepath="$PROJECT_DIR$/svgparser/svgparser.iml" />
     </modules>
   </component>
 </project>
