@@ -29,7 +29,7 @@ public class SVGParser {
     private List<Instruction> instructions= new ArrayList<>();
     private PointF scale=null;
     private Point translate=null;
-    SVGParser(String filedata){
+    public SVGParser(String filedata){
         try {
             parser = XmlPullParserFactory.newInstance().newPullParser();
             in = new StringBufferInputStream(filedata);
@@ -40,7 +40,7 @@ public class SVGParser {
         }
     }
 
-    void startParsing(){
+    public void startParsing(){
         try{
             while(parser.getEventType()!=XmlPullParser.END_DOCUMENT){
                 if(parser.getEventType()==XmlPullParser.START_TAG){
