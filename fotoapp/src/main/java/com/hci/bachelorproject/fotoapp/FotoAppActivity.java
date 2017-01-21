@@ -1,6 +1,5 @@
 package com.hci.bachelorproject.fotoapp;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -22,6 +21,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
+import com.hci.bachelorproject.bluetoothlib.PrinterConnection;
+import com.hci.bachelorproject.bluetoothlib.PrinterConnector;
 import com.hci.bachelorproject.fotoapp.ImageProcessing.ImageTracerAndroid;
 import com.hci.bachelorproject.fotoapp.ImageProcessing.ImageTransformator;
 
@@ -41,6 +42,7 @@ public class FotoAppActivity extends AudioActivity {
 
 	SVGParser parser ;
 	String svgString = "";
+	PrinterConnector printerConnector;
 
     DisplayMetrics displaymetrics;
 
@@ -59,9 +61,6 @@ public class FotoAppActivity extends AudioActivity {
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
 		displaymetrics = new DisplayMetrics();
 		getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-
-		//context = getApplicationContext(); // Needs to be set
-		//VoiceRecognitionListener.getInstance().setListener(this); // Here we set the current listener
 
         //checkWriteToStoragePermission();
 
@@ -160,13 +159,6 @@ public class FotoAppActivity extends AudioActivity {
 	}
 
 
-	@Override
-	public void connectionEstablished() {
-		Log.d(TAG, "connectionEstablished: ");
-		sendCommands(svgString);
-	}
-
-
 
 	private void handleIncomingIntents(){
 		Intent intent = getIntent();
@@ -252,15 +244,38 @@ public class FotoAppActivity extends AudioActivity {
 	}
 
 	private void sendImageToLaserPlotter(String svgString){
-		if (device == null || connection == null){
-			initializeConnection(Mode.TCP);
-			//initializeConnection(Mode.BLUETOOTH);
+		final String svgData = svgString;
+		PrinterConnection.OnConnectionCallBack onConnectionCallBack = new PrinterConnection.OnConnectionCallBack() {
+			@Override
+			public void connectionEstablished() {
+				Log.d(TAG, "connectionEstablished: ");
+				sendCommands(printerConnector, svgData);
+			}
+
+			@Override
+			public void connectionLost() {
+
+			}
+
+			@Override
+			public void connectionRefused() {
+
+			}
+
+			@Override
+			public void newCharsAvailable(byte[] c, int byteCount) {
+
+			}
+		};
+		printerConnector = new PrinterConnector(PrinterConnector.Mode.TCP,"","192.168.42.132", 8090,
+				getApplicationContext(),onConnectionCallBack);
+		if (printerConnector.device == null || printerConnector.connection == null){
+			printerConnector.initializeConnection();
 		} else {
-			if (!connection.isConnected()){
-				initializeConnection(Mode.TCP);
-				//initializeConnection(Mode.BLUETOOTH);
+			if (!printerConnector.connection.isConnected()){
+				printerConnector.initializeConnection();
 			} else {
-				sendCommands(svgString);
+				sendCommands(printerConnector, svgString);
 			}
 		}
 
@@ -268,7 +283,7 @@ public class FotoAppActivity extends AudioActivity {
 	}
 
 
-	protected void sendCommands(String svgString){
+	protected void sendCommands(PrinterConnector printerConnector, String svgString){
 		parser = new SVGParser(svgString);
 		ArrayList<Instruction> instructions = new ArrayList<>();
 		parser.setInstructions(instructions);
@@ -276,7 +291,7 @@ public class FotoAppActivity extends AudioActivity {
 
 		for (Instruction instruction : instructions){
 			Log.d("Connection", "sending instruction " + instruction.buildInstruction(Instruction.Mode.GPGL));
-			connection.write(instruction.buildInstruction(Instruction.Mode.GPGL));
+			printerConnector.connection.write(instruction.buildInstruction(Instruction.Mode.GPGL));
 		}
 	}
 

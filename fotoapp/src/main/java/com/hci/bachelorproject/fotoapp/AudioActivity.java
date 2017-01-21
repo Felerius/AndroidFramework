@@ -1,6 +1,7 @@
 package com.hci.bachelorproject.fotoapp;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,7 +23,7 @@ import static android.content.ContentValues.TAG;
  * Created by Julius on 17.01.2017.
  */
 
-public class AudioActivity extends BluetoothActivity  {
+public class AudioActivity extends Activity {
 
     protected TextToSpeech tts;
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 3;
