@@ -1,4 +1,4 @@
-package com.hci.bachelorproject.fotoapp;
+package com.hci.bachelorproject.speechlib;
 
 import android.app.Service;
 import android.content.Context;
@@ -61,7 +61,7 @@ public class VoiceRecogService extends Service
 
     private void sendMessage(String message) {
         Log.d("Broadcast", "broadcasting " + message);
-        Intent intent = new Intent(AudioHandler.RECEIVED_SPEECH);
+        Intent intent = new Intent(SpeechRecognitionHandler.RECEIVED_SPEECH);
         // add data
         intent.putExtra("message", message);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -244,9 +244,9 @@ public class VoiceRecogService extends Service
         public void onResults(Bundle results)
         {
             Log.d(TAG, "onResults"); //$NON-NLS-1$
-            ArrayList data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+            ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
 
-            for (int i = 0; i < data.size(); i++)
+            /*for (int i = 0; i < data.size(); i++)
             {
                 Log.d("TESTING: SPEECH SERVICE", (String)data.get(i));
             }
@@ -259,7 +259,10 @@ public class VoiceRecogService extends Service
                 Log.d("Choose Picture", "Choosing picture...");
                 sendMessage("choose");
             }
-
+*/
+            for (String result : data){
+                sendMessage(result);
+            }
             mSpeechRecognizer.cancel();
             mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
 

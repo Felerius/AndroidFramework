@@ -22,7 +22,7 @@ import static android.content.ContentValues.TAG;
 /**
  * Created by Julius on 17.01.2017.
  */
-
+/*
 public class AudioActivity extends Activity {
 
     protected TextToSpeech tts;
@@ -101,7 +101,7 @@ public class AudioActivity extends Activity {
 					/*context = getApplicationContext(); // Needs to be set
 					VoiceRecognitionListener.getInstance().setListener(this); // Here we set the current listener
 					startListening(); // starts listening*/
-                    startService(new Intent(this, VoiceRecogService.class));
+               /*     startService(new Intent(this, VoiceRecogService.class));
                 } else {
 
                     // permission denied, boo! Disable the
@@ -121,7 +121,7 @@ public class AudioActivity extends Activity {
         super.onResume();
         checkSpeechRecognitionPermission();
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
-                new IntentFilter(AudioHandler.RECEIVED_SPEECH));
+                new IntentFilter(SpeechRecognitionHandler.RECEIVED_SPEECH));
 
 
 
@@ -161,4 +161,4 @@ public class AudioActivity extends Activity {
     }
 
 
-}
+}*/

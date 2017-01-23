@@ -25,8 +25,10 @@ import com.hci.bachelorproject.bluetoothlib.PrinterConnection;
 import com.hci.bachelorproject.bluetoothlib.PrinterConnector;
 import com.hci.bachelorproject.fotoapp.ImageProcessing.ImageTracerAndroid;
 import com.hci.bachelorproject.fotoapp.ImageProcessing.ImageTransformator;
+import com.hci.bachelorproject.speechlib.SpeechRecognitionHandler;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import kuchinke.com.svgparser.Instruction;
 import kuchinke.com.svgparser.SVGParser;
@@ -34,7 +36,7 @@ import kuchinke.com.svgparser.SVGParser;
 import static android.content.ContentValues.TAG;
 
 
-public class FotoAppActivity extends AudioActivity {
+public class FotoAppActivity extends Activity {
 
     private static final int PICK_IMAGE_REQUEST = 2;
 	private static final int CAMERA_REQUEST = 1;
@@ -45,7 +47,8 @@ public class FotoAppActivity extends AudioActivity {
 	PrinterConnector printerConnector;
 
     DisplayMetrics displaymetrics;
-
+	private TextToSpeech tts;
+	SpeechRecognitionHandler audioHandler;
 	WebView wv;
 
 	String mimeType = "text/html";
@@ -64,29 +67,58 @@ public class FotoAppActivity extends AudioActivity {
 
         //checkWriteToStoragePermission();
 
+		tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+			@Override
+			public void onInit(int status) {
+				if (status == TextToSpeech.SUCCESS) {
+					Log.d("TTS","successfully set up text to speech");
+					int result = tts.setLanguage(Locale.US);
 
-		mMessageReceiver = new BroadcastReceiver() {
+					if (result == TextToSpeech.LANG_MISSING_DATA
+							|| result == TextToSpeech.LANG_NOT_SUPPORTED) {
+						Log.e("TTS", "This Language is not supported");
+					}
+
+				} else {
+					Log.e("TTS", "Initilization Failed!");
+				}
+			}
+		});
+
+		BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 				// Extract data included in the Intent
 				String message = intent.getStringExtra("message");
 				Log.d("receiver", "Got message: " + message);
 				switch (message){
-					case "take":
+					case "take picture":
+					case "Foto machen":
+					case "take a picture":
+					case "Foto schießen":
+
 						tts.speak("Opening camera", TextToSpeech.QUEUE_FLUSH, null);
 						takePictureIntent();
 						break;
-					case "choose":
+					case "choose picture":
+					case "pick picture":
+					case "Foto auswählen":
+					case "choose a picture":
+					case "pick a picture":
+
 						tts.speak("Opening album", TextToSpeech.QUEUE_FLUSH, null);
 						pickPictureIntent();
 						break;
 					default:
+						Log.d("receiver", "no action recognized");
 						break;
 				}
 
 			}
 		};
 
+		audioHandler = new SpeechRecognitionHandler(getApplicationContext(),broadcastReceiver);
+		audioHandler.startSpeechRecognition();
 
 
 		// UI
@@ -96,9 +128,6 @@ public class FotoAppActivity extends AudioActivity {
 		LinearLayout ll = new LinearLayout(getApplicationContext());
 		ll.setOrientation(LinearLayout.VERTICAL);
 		sv.addView(ll);
-
-		// TextView for log
-		// tv = new TextView(getApplicationContext()); tv.setText("Hi! ☺");ll.addView(tv);
 
 		// WebView to show SVG
 		wv = new WebView(getApplicationContext());
@@ -133,7 +162,29 @@ public class FotoAppActivity extends AudioActivity {
 		handleIncomingIntents();
 
 
-	}// End of onCreate()
+	}
+
+	public void onPause(){
+		super.onPause();
+		audioHandler.stopSpeechRecognition();
+	}
+
+	public void onResume(){
+		super.onResume();
+		audioHandler.startSpeechRecognition();
+	}
+
+	public void onDestroy(){
+		super.onDestroy();
+		stopTextToSpeech();
+	}
+
+	public void stopTextToSpeech(){
+		if (tts != null) {
+			tts.stop();
+			tts.shutdown();
+		}
+	}
 
 	private void pickPictureIntent() {
 		try {

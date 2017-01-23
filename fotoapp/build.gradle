@@ -30,5 +30,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.1.0'
     compile project(':bluetoothlib')
     compile project(':svgparser')
+    compile project(':speechlib')
+
     testCompile 'junit:junit:4.12'
 }
