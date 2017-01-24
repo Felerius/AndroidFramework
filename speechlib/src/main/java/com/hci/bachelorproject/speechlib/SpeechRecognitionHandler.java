@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 /**
  * Created by Julius on 20.01.2017.
@@ -12,11 +13,30 @@ import android.support.v4.content.LocalBroadcastManager;
 
 public class SpeechRecognitionHandler {
     Context context;
+    interface OnSpeechRecognizedListener{
+        void onSpeechRecognized(String message);
+    }
     public static final String RECEIVED_SPEECH = "received_speech";
-    private BroadcastReceiver broadcastReceiver;
-    public SpeechRecognitionHandler(Context context, BroadcastReceiver broadcastReceiver){
+    private OnSpeechRecognizedListener listener;
+    private BroadcastReceiver broadcastReceiver=new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action=intent.getAction();
+            if(action.equals(RECEIVED_SPEECH)|| action.equals(context.getPackageName()+"."+RECEIVED_SPEECH)){
+                String message=intent.getStringExtra("message");
+                if(listener!=null)listener.onSpeechRecognized(message);
+            }
+        }
+    };
+    public SpeechRecognitionHandler(Context context, OnSpeechRecognizedListener listener){
         this.context = context;
+        this.listener=listener;
         this.broadcastReceiver = broadcastReceiver;
+        initializeBroadcastReceiver();
+    }
+    public SpeechRecognitionHandler(Context context){
+        this.context = context;
+
         initializeBroadcastReceiver();
     }
 
@@ -41,5 +61,11 @@ public class SpeechRecognitionHandler {
         LocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver,
                 new IntentFilter(RECEIVED_SPEECH));
 
+
+
+    }
+
+    public void setListener(OnSpeechRecognizedListener listener) {
+        this.listener = listener;
     }
 }
