@@ -47,8 +47,19 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	String svgString = "";
 	PrinterConnector printerConnector;
 
+	public PrinterConnector.Mode getConnectionMode() {
+		return connectionMode;
+	}
+
+	public void setConnectionMode(PrinterConnector.Mode connectionMode) {
+		this.connectionMode = connectionMode;
+	}
+
+	PrinterConnector.Mode connectionMode = PrinterConnector.Mode.TCP;
+
     DisplayMetrics displaymetrics;
 	private TextToSpeech tts;
+	String utteranceId=this.hashCode() + "";
 	SpeechRecognitionHandler audioHandler;
 	WebView wv;
 
@@ -238,7 +249,6 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
                 }
 
 				wv.loadDataWithBaseURL("", svgString, mimeType, encoding,"");
-				tts.speak("Sending image to laser plotter", TextToSpeech.QUEUE_FLUSH, null);
 
 				sendImageToLaserPlotter(svgString);
 			} catch (Exception e) { Log.e(" Error tracing photo ",e.toString());}
@@ -254,7 +264,6 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 				svgString = ImageTracerAndroid.imageToSVG(compressedPicture, null, null);
 
                 wv.loadDataWithBaseURL("", svgString, mimeType, encoding,"");
-				tts.speak("Sending image to laser plotter", TextToSpeech.QUEUE_FLUSH, null);
 
 				sendImageToLaserPlotter(svgString);
             } catch (Exception e) {
@@ -269,17 +278,18 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 			@Override
 			public void connectionEstablished() {
 				Log.d(TAG, "connectionEstablished: ");
+				tts.speak(getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_FLUSH, null,utteranceId);
 				sendCommands(printerConnector, svgData);
 			}
 
 			@Override
 			public void connectionLost() {
-
+				tts.speak(getString(R.string.lost_connection), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 			}
 
 			@Override
 			public void connectionRefused() {
-
+				tts.speak(getString(R.string.could_not_connect), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 			}
 
 			@Override
@@ -287,14 +297,17 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 			}
 		};
-		printerConnector = new PrinterConnector(PrinterConnector.Mode.TCP,"raspberrypi","192.168.42.132", 8090,
+		printerConnector = new PrinterConnector(PrinterConnector.Mode.TCP,getString(R.string.bluetooth_device_name),"192.168.42.132", 8090,
 				getApplicationContext(),onConnectionCallBack);
 		if (printerConnector.device == null || printerConnector.connection == null){
+			tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 			printerConnector.initializeConnection();
 		} else {
 			if (!printerConnector.connection.isConnected()){
+				tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				printerConnector.initializeConnection();
 			} else {
+				tts.speak(getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				sendCommands(printerConnector, svgString);
 			}
 		}
@@ -334,8 +347,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 			case "Foto machen":
 			case "take a picture":
 			case "Foto schießen":
-
-				tts.speak("Opening camera", TextToSpeech.QUEUE_FLUSH, null);
+				tts.speak("Opening camera", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				takePictureIntent();
 				break;
 			case "choose picture":
@@ -343,9 +355,16 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 			case "Foto auswählen":
 			case "choose a picture":
 			case "pick a picture":
-
-				tts.speak("Opening album", TextToSpeech.QUEUE_FLUSH, null);
+				tts.speak("Opening album", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				pickPictureIntent();
+				break;
+			case "set mode bluetooth":
+				setConnectionMode(PrinterConnector.Mode.BLUETOOTH);
+				break;
+			case "set mode tcp":
+			case "set mode debug":
+			case "set mode debugging":
+				setConnectionMode(PrinterConnector.Mode.TCP);
 				break;
 			default:
 				Log.d("receiver", "no action recognized");

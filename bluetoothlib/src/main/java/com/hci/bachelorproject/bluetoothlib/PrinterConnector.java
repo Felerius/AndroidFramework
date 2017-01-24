@@ -28,7 +28,6 @@ public class PrinterConnector  {
     public PrinterConnection connection;
     private BluetoothAdapter adapter;
     protected boolean isConnected=false;
-    ArrayList<Instruction> commands = new ArrayList<Instruction>();
     private String deviceName;
     private Mode mode;
     private String ip;
