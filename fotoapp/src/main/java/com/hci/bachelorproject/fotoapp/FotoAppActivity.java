@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
+import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -36,7 +37,7 @@ import kuchinke.com.svgparser.SVGParser;
 import static android.content.ContentValues.TAG;
 
 
-public class FotoAppActivity extends Activity {
+public class FotoAppActivity extends Activity implements SpeechRecognitionHandler.OnSpeechRecognizedListener{
 
     private static final int PICK_IMAGE_REQUEST = 2;
 	private static final int CAMERA_REQUEST = 1;
@@ -85,39 +86,7 @@ public class FotoAppActivity extends Activity {
 			}
 		});
 
-		BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				// Extract data included in the Intent
-				String message = intent.getStringExtra("message");
-				Log.d("receiver", "Got message: " + message);
-				switch (message){
-					case "take picture":
-					case "Foto machen":
-					case "take a picture":
-					case "Foto schießen":
-
-						tts.speak("Opening camera", TextToSpeech.QUEUE_FLUSH, null);
-						takePictureIntent();
-						break;
-					case "choose picture":
-					case "pick picture":
-					case "Foto auswählen":
-					case "choose a picture":
-					case "pick a picture":
-
-						tts.speak("Opening album", TextToSpeech.QUEUE_FLUSH, null);
-						pickPictureIntent();
-						break;
-					default:
-						Log.d("receiver", "no action recognized");
-						break;
-				}
-
-			}
-		};
-
-		audioHandler = new SpeechRecognitionHandler(getApplicationContext(),broadcastReceiver);
+		audioHandler = new SpeechRecognitionHandler(getApplicationContext(),this);
 		audioHandler.startSpeechRecognition();
 
 
@@ -318,7 +287,7 @@ public class FotoAppActivity extends Activity {
 
 			}
 		};
-		printerConnector = new PrinterConnector(PrinterConnector.Mode.TCP,"","192.168.42.132", 8090,
+		printerConnector = new PrinterConnector(PrinterConnector.Mode.TCP,"raspberrypi","192.168.42.132", 8090,
 				getApplicationContext(),onConnectionCallBack);
 		if (printerConnector.device == null || printerConnector.connection == null){
 			printerConnector.initializeConnection();
@@ -329,13 +298,12 @@ public class FotoAppActivity extends Activity {
 				sendCommands(printerConnector, svgString);
 			}
 		}
-
-
 	}
 
 
 	protected void sendCommands(PrinterConnector printerConnector, String svgString){
-		parser = new SVGParser(svgString);
+		//parser = new SVGParser(svgString,true);
+		parser = new SVGParser(svgString, new PointF(20,20));
 		ArrayList<Instruction> instructions = new ArrayList<>();
 		parser.setInstructions(instructions);
 		parser.startParsing();
@@ -358,6 +326,33 @@ public class FotoAppActivity extends Activity {
     }
 
 
+	@Override
+	public void onSpeechRecognized(String message) {
+		Log.d("receiver", "Got message: " + message);
+		switch (message) {
+			case "take picture":
+			case "Foto machen":
+			case "take a picture":
+			case "Foto schießen":
+
+				tts.speak("Opening camera", TextToSpeech.QUEUE_FLUSH, null);
+				takePictureIntent();
+				break;
+			case "choose picture":
+			case "pick picture":
+			case "Foto auswählen":
+			case "choose a picture":
+			case "pick a picture":
+
+				tts.speak("Opening album", TextToSpeech.QUEUE_FLUSH, null);
+				pickPictureIntent();
+				break;
+			default:
+				Log.d("receiver", "no action recognized");
+				break;
+		}
+
+	}
 
 
 }

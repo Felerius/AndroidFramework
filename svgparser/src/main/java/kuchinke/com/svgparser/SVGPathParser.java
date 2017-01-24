@@ -91,7 +91,7 @@ public class SVGPathParser {
         Point pos=new Point(0,0);
         if(position2!=null)pos=position2;
         String []parts=splitCommand(command);
-        if(parts.length%4!=0){
+        if(parts.length%4!=1){
             Log.d(TAG, "parseQuadraticBezier: wrong parameter count");
             return;
         }

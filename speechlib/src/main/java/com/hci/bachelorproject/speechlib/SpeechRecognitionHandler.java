@@ -13,7 +13,7 @@ import android.util.Log;
 
 public class SpeechRecognitionHandler {
     Context context;
-    interface OnSpeechRecognizedListener{
+    public interface OnSpeechRecognizedListener{
         void onSpeechRecognized(String message);
     }
     public static final String RECEIVED_SPEECH = "received_speech";

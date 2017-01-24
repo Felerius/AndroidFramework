@@ -65,6 +65,7 @@ public class PrinterConnector  {
                 Log.d(TAG,"Bluetooth device found " + d.getName());
                 if (d.getName()!=null){
                     if (d.getName().contains(deviceName)) {
+                        adapter.cancelDiscovery();
                         device = d;
                         Log.d(TAG, "found device");
                         initializeBluetoothConnection();

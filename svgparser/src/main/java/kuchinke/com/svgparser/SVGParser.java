@@ -1,5 +1,6 @@
 package kuchinke.com.svgparser;
 
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.util.Log;
@@ -29,7 +30,46 @@ public class SVGParser {
     private List<Instruction> instructions= new ArrayList<>();
     private PointF scale=null;
     private Point translate=null;
+    private boolean onlyBlackLines = false;
+
     public SVGParser(String filedata){
+        try {
+            parser = XmlPullParserFactory.newInstance().newPullParser();
+            in = new StringBufferInputStream(filedata);
+            InputStreamReader r= new InputStreamReader(in);
+            parser.setInput(r);
+        }catch (Exception e){
+            Log.d(TAG, "SVGParser: couldnt create parser");
+        }
+    }
+
+    public SVGParser(String filedata, boolean onlyBlackLines){
+        this.onlyBlackLines = onlyBlackLines;
+        try {
+            parser = XmlPullParserFactory.newInstance().newPullParser();
+            in = new StringBufferInputStream(filedata);
+            InputStreamReader r= new InputStreamReader(in);
+            parser.setInput(r);
+        }catch (Exception e){
+            Log.d(TAG, "SVGParser: couldnt create parser");
+        }
+    }
+
+    public SVGParser(String filedata, PointF scale){
+        this.scale = scale;
+        try {
+            parser = XmlPullParserFactory.newInstance().newPullParser();
+            in = new StringBufferInputStream(filedata);
+            InputStreamReader r= new InputStreamReader(in);
+            parser.setInput(r);
+        }catch (Exception e){
+            Log.d(TAG, "SVGParser: couldnt create parser");
+        }
+    }
+
+    public SVGParser(String filedata, boolean onlyBlackLines, PointF scale){
+        this.onlyBlackLines = onlyBlackLines;
+        this.scale = scale;
         try {
             parser = XmlPullParserFactory.newInstance().newPullParser();
             in = new StringBufferInputStream(filedata);
@@ -98,6 +138,7 @@ public class SVGParser {
 
     private void readRect() {
         int x=0,y=0,w=0,h=0;
+        int strokeColor;
         int attrCount=parser.getAttributeCount();
         for(int i=0;i<attrCount;i++){
             String name=parser.getAttributeName(i);
@@ -129,6 +170,14 @@ public class SVGParser {
                 case "id":{
                     if(parser.getAttributeValue(i).equals("canvas_background"))return;
                     break;
+                }
+                case "stroke":{
+                    String colorString =(String)(parser.getAttributeValue(i));
+
+                    strokeColor = Color.parseColor(colorString);
+                    Log.d("Parsed Color", "parsed color " +strokeColor);
+                    break;
+
                 }
 
             }
@@ -212,7 +261,19 @@ public class SVGParser {
 
     void readPath(){
         String data= parser.getAttributeValue("", "d");
+        String colorString="";
+
+        if (parser.getAttributeValue("", "stroke").startsWith("rgb")){
+
+            colorString = parser.getAttributeValue("", "stroke");
+
+            Log.d("Parsed Color", "parsed color " +colorString);
+
+        }
         //Log.d(TAG, "readPath: data: "+data);
+        if (onlyBlackLines && !colorString.equals("rgb(255,255,255)")){
+            return;
+        }
         SVGPathParser pathParser= new SVGPathParser(data);
         pathParser.setInstructionList(instructions);
         pathParser.parseCommands();
