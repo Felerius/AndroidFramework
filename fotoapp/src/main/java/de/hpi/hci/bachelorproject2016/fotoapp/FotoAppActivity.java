@@ -26,17 +26,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
-<<<<<<< Updated upstream:fotoapp/src/main/java/de/hpi/hci/bachelorproject2016/fotoapp/FotoAppActivity.java
-=======
-import com.hci.bachelorproject.bluetoothlib.PrinterConnection;
-import com.hci.bachelorproject.bluetoothlib.PrinterConnector;
-import com.hci.bachelorproject.fotoapp.ImageProcessing.ImageTracerAndroid;
-import com.hci.bachelorproject.fotoapp.ImageProcessing.ImageTransformator;
-import com.hci.bachelorproject.speechlib.SpeechRecognitionHandler;
 
 import java.io.File;
-import java.io.IOException;
->>>>>>> Stashed changes:fotoapp/src/main/java/com/hci/bachelorproject/fotoapp/FotoAppActivity.java
 import java.util.ArrayList;
 import java.util.Locale;
 
