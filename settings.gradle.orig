@@ -1,5 +1,0 @@
-<<<<<<< Updated upstream
-include ':braillelib', ':speechlib', ':svgparser'
-=======
-include ':braillelib', ':speechlib', ':fotoapp', ':bluetoothlib'
->>>>>>> Stashed changes
