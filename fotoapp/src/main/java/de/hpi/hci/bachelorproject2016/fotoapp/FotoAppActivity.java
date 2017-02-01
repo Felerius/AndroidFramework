@@ -11,12 +11,16 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -25,32 +29,51 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Toast;
 
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnection;
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnector;
 import de.hpi.hci.bachelorproject2016.fotoapp.ImageProcessing.ImageTracerAndroid;
 import de.hpi.hci.bachelorproject2016.fotoapp.ImageProcessing.ImageTransformator;
+import de.hpi.hci.bachelorproject2016.speechlib.SingleSpeechRecognitionHandler;
 import de.hpi.hci.bachelorproject2016.speechlib.SpeechRecognitionHandler;
 import de.hpi.hci.bachelorproject2016.svgparser.Instruction;
 import de.hpi.hci.bachelorproject2016.svgparser.SVGParser;
 
 import static android.content.ContentValues.TAG;
 
-public class FotoAppActivity extends Activity implements SpeechRecognitionHandler.OnSpeechRecognizedListener{
+public class FotoAppActivity extends Activity implements SpeechRecognitionHandler.OnSpeechRecognizedListener {
 
-    private static final int PICK_IMAGE_REQUEST = 2;
+	private static final int PICK_IMAGE_REQUEST = 2;
 	private static final int CAMERA_REQUEST = 1;
 	private static final int MY_PERMISSIONS_CAMERA_REQUEST = 100;
 	private static final int MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST = 101;
-
-	SVGParser parser ;
+	public static final int REPEAT_INSTRUCTIONS_TIME = 30000;
+	private final ScheduledExecutorService scheduler =
+			Executors.newScheduledThreadPool(1);
+	SettingsContentObserver mContentObserver;
+	SVGParser parser;
 	String svgString = "";
 	PrinterConnector printerConnector;
+	/**
+	 * ATTENTION: This was auto-generated to implement the App Indexing API.
+	 * See https://g.co/AppIndexing/AndroidStudio for more information.
+	 */
+	private GoogleApiClient client;
 
 	public PrinterConnector.Mode getConnectionMode() {
 		return connectionMode;
@@ -62,15 +85,33 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 	PrinterConnector.Mode connectionMode = PrinterConnector.Mode.TCP;
 
-    DisplayMetrics displaymetrics;
+	DisplayMetrics displaymetrics;
 	private TextToSpeech tts;
-	String utteranceId=this.hashCode() + "";
-	SpeechRecognitionHandler audioHandler;
+	String utteranceId = this.hashCode() + "";
+	//SpeechRecognitionHandler audioHandler;
+	SingleSpeechRecognitionHandler speechHandler;
+	private boolean firstPressedVolumeButtons = false;
+	private final Handler handler = new Handler() {
+
+		public void handleMessage(Message msg) {
+
+			Log.i("resp", "volume changed");
+			if (speechHandler != null) {
+				speechHandler.startSingleSpeechRecognition();
+				firstPressedVolumeButtons = true;
+			}
+
+
+		}
+	};
+
 	WebView wv;
+
 
 	String mimeType = "text/html";
 	String encoding = "utf-8";
 	String dir;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -84,12 +125,26 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/picFolder/";
 		File newdir = new File(dir);
 		newdir.mkdirs();
-        //checkWriteToStoragePermission();
+		mContentObserver = new SettingsContentObserver(this, handler);
+		getApplicationContext().getContentResolver().registerContentObserver(Settings.System.CONTENT_URI,
+				true, mContentObserver);
+		firstPressedVolumeButtons = false;
+		//checkWriteToStoragePermission();
 		//checkPermission();
-		audioHandler = new SpeechRecognitionHandler(getApplicationContext(),this);
+		//audioHandler = new SpeechRecognitionHandler(getApplicationContext(),this);
+		speechHandler = new SingleSpeechRecognitionHandler(getApplicationContext(), this);
 
 		initTTS();
+		ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
+		executorService.schedule(new Runnable() {
+			@Override
+			public void run() {
+				if (firstPressedVolumeButtons == false) {
+					tts.speak(getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, utteranceId);
 
+				}
+			}
+		}, REPEAT_INSTRUCTIONS_TIME, TimeUnit.MILLISECONDS);
 
 
 		// UI
@@ -107,7 +162,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		// Button 1
 		Button b1 = new Button(getApplicationContext());
 		b1.setText(R.string.take_a_picture_button_text);
-		b1.setOnClickListener(new OnClickListener(){
+		b1.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View view) {
 				//checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
@@ -120,7 +175,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		// Button 2
 		Button b2 = new Button(getApplicationContext());
 		b2.setText(R.string.pick_a_picture_button_text);
-		b2.setOnClickListener(new OnClickListener(){
+		b2.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View view) {
 				pickPictureIntent();
@@ -130,31 +185,35 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		ll.addView(b2);
 
 
-        // Displaying UI
+		// Displaying UI
 		setContentView(sv);
 		handleIncomingIntents();
 
 
+		// ATTENTION: This was auto-generated to implement the App Indexing API.
+		// See https://g.co/AppIndexing/AndroidStudio for more information.
+		client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 	}
+
 
 	private void checkPermission(String permission, int requestCode) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			if (ContextCompat.checkSelfPermission(getApplicationContext(),
 					permission)
 					!= PackageManager.PERMISSION_GRANTED) {
-					ActivityCompat.requestPermissions(FotoAppActivity.this, new String[]{permission},
-							requestCode);
+				ActivityCompat.requestPermissions(FotoAppActivity.this, new String[]{permission},
+						requestCode);
 
 			}
 		}
 	}
 
-	private void initTTS(){
+	private void initTTS() {
 		tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
 			@Override
 			public void onInit(int status) {
 				if (status == TextToSpeech.SUCCESS) {
-					Log.d("TTS","successfully set up text to speech");
+					Log.d("TTS", "successfully set up text to speech");
 					int result = tts.setLanguage(new Locale(Locale.getDefault().getISO3Language(),
 							Locale.getDefault().getISO3Country()));
 
@@ -162,9 +221,9 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 							|| result == TextToSpeech.LANG_NOT_SUPPORTED) {
 						Log.e("TTS", "This Language is not supported");
 					}
-					tts.speak(getString(R.string.started_foto_app) + getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_FLUSH, null,utteranceId);
+					tts.speak(getString(R.string.started_foto_app) + getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, utteranceId);
 
-					audioHandler.startSpeechRecognition();
+					//audioHandler.startSpeechRecognition();
 
 				} else {
 					Log.e("TTS", "Initilization Failed!");
@@ -173,30 +232,36 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		});
 	}
 
-	public void onPause(){
+	public void onPause() {
 		super.onPause();
-		audioHandler.stopSpeechRecognition();
+		//audioHandler.stopSpeechRecognition();
 		//tts.speak("Fotoapp wird geschlossen", TextToSpeech.QUEUE_FLUSH,null,utteranceId);
 
 	}
 
-	public void onResume(){
+	public void onResume() {
 		super.onResume();
-		audioHandler.startSpeechRecognition();
+		//audioHandler.startSpeechRecognition();
 
 	}
 
-	public void onStart(){
-		super.onStart();
-		initTTS();
+	public void onStart() {
+		super.onStart();// ATTENTION: This was auto-generated to implement the App Indexing API.
+// See https://g.co/AppIndexing/AndroidStudio for more information.
+		client.connect();
+
+		// ATTENTION: This was auto-generated to implement the App Indexing API.
+		// See https://g.co/AppIndexing/AndroidStudio for more information.
+		AppIndex.AppIndexApi.start(client, getIndexApiAction());
 	}
 
-	public void onDestroy(){
+	public void onDestroy() {
 		super.onDestroy();
+		getApplicationContext().getContentResolver().unregisterContentObserver(mContentObserver);
 		stopTextToSpeech();
 	}
 
-	public void stopTextToSpeech(){
+	public void stopTextToSpeech() {
 		if (tts != null) {
 			tts.stop();
 			tts.shutdown();
@@ -205,25 +270,27 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 	private void pickPictureIntent() {
 		try {
-			tts.speak(getString(R.string.on_choose_picture), TextToSpeech.QUEUE_FLUSH, null,utteranceId);
+			tts.speak(getString(R.string.on_choose_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 			Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
-            getIntent.setType("image/*");
+			getIntent.setType("image/*");
 
-            Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            pickIntent.setType("image/*");
+			Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+			pickIntent.setType("image/*");
 
-            //Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
-            //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
+			//Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
+			//chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
 
-            startActivityForResult(pickIntent, PICK_IMAGE_REQUEST);
+			startActivityForResult(pickIntent, PICK_IMAGE_REQUEST);
 			//startActivityForResult(chooserIntent, PICK_IMAGE_REQUEST);
-        }catch(Exception e){ e.printStackTrace(); }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void takePictureIntent() {
 		try {
 			// Starting an Intent to take a picture
-			tts.speak(getString(R.string.on_open_camera), TextToSpeech.QUEUE_FLUSH, null,utteranceId);
+			tts.speak(getString(R.string.on_open_camera), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 			/*String file = dir+"test.jpg";
 			File newfile = new File(file);
 
@@ -239,12 +306,13 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 			Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 //			cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
 			startActivityForResult(cameraIntent, CAMERA_REQUEST);
-		}catch(Exception e){ e.printStackTrace(); }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 
-
-	private void handleIncomingIntents(){
+	private void handleIncomingIntents() {
 		Intent intent = getIntent();
 		String action = intent.getAction();
 		String type = intent.getType();
@@ -253,7 +321,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 			if ("text/plain".equals(type)) {
 				Log.e("FotoApp", "only accepting single image from other apps");
 			} else if (type.startsWith("image/")) {
-				Log.i(TAG,"received image");
+				Log.i(TAG, "received image");
 				handleSendImage(intent); // Handle single image being sent
 			}
 		} else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
@@ -266,20 +334,22 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	}
 
 
-    void handleSendImage(Intent intent) {
-        Uri imageUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+	void handleSendImage(Intent intent) {
+		Uri imageUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
 
-        if (imageUri != null) {
-            try {
-				Bitmap picture = MediaStore.Images.Media.getBitmap(this.getContentResolver(),imageUri);
-				Bitmap compressedPicture =  ImageTransformator.compressImage(picture);
+		if (imageUri != null) {
+			try {
+				Bitmap picture = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+				Bitmap compressedPicture = ImageTransformator.compressImage(picture);
 				compressedPicture = ImageTransformator.applyFilters(compressedPicture);
-                svgString = ImageTracerAndroid.imageToSVG( compressedPicture , null, null);
-                wv.loadDataWithBaseURL("", svgString, mimeType, encoding,"");
-            } catch (Exception e) { Log.e(" Error tracing photo ", e.toString());}
+				svgString = ImageTracerAndroid.imageToSVG(compressedPicture, null, null);
+				wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
+			} catch (Exception e) {
+				Log.e(" Error tracing photo ", e.toString());
+			}
 
-        }
-    }
+		}
+	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -287,44 +357,46 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		if ((requestCode == CAMERA_REQUEST) && (resultCode == Activity.RESULT_OK)) {
 
 			Bitmap picture = (Bitmap) data.getExtras().get("data");
-            Log.d("Camera request", "received img from cam");
+			Log.d("Camera request", "received img from cam");
 			Log.d("Camera request", picture.toString());
 
 			picture = ImageTransformator.applyFilters(picture);
 
 
-            try {
-				svgString = ImageTracerAndroid.imageToSVG( picture , null, null);
+			try {
+				svgString = ImageTracerAndroid.imageToSVG(picture, null, null);
 				int maxLogSize = 1000;
-                for(int i = 0; i <= svgString.length() / maxLogSize; i++) {
-                    int start = i * maxLogSize;
-                    int end = (i+1) * maxLogSize;
-                    end = end > svgString.length() ? svgString.length() : end;
-                    Log.v(TAG, svgString.substring(start, end));
-                }
+				for (int i = 0; i <= svgString.length() / maxLogSize; i++) {
+					int start = i * maxLogSize;
+					int end = (i + 1) * maxLogSize;
+					end = end > svgString.length() ? svgString.length() : end;
+					Log.v(TAG, svgString.substring(start, end));
+				}
 
-				wv.loadDataWithBaseURL("", svgString, mimeType, encoding,"");
-				tts.speak(getString(R.string.took_picture), TextToSpeech.QUEUE_FLUSH, null,utteranceId);
+				wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
+				tts.speak(getString(R.string.took_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				sendImageToLaserPlotter(svgString);
-			} catch (Exception e) { Log.e(" Error tracing photo ",e.toString());}
+			} catch (Exception e) {
+				Log.e(" Error tracing photo ", e.toString());
+			}
 		} else if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
 
-            Uri uri = data.getData();
+			Uri uri = data.getData();
 
-            try {
-                Bitmap picture = MediaStore.Images.Media.getBitmap(this.getContentResolver(),uri);
-                Bitmap compressedPicture =  ImageTransformator.compressImage(picture);
-                compressedPicture = ImageTransformator.applyFilters(compressedPicture);
+			try {
+				Bitmap picture = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+				Bitmap compressedPicture = ImageTransformator.compressImage(picture);
+				compressedPicture = ImageTransformator.applyFilters(compressedPicture);
 
 				svgString = ImageTracerAndroid.imageToSVG(compressedPicture, null, null);
 
-                wv.loadDataWithBaseURL("", svgString, mimeType, encoding,"");
-				tts.speak(getString(R.string.picked_picture), TextToSpeech.QUEUE_FLUSH, null,utteranceId);
+				wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
+				tts.speak(getString(R.string.picked_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				sendImageToLaserPlotter(svgString);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 
@@ -337,7 +409,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 				if (grantResults.length > 0
 						&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					if (ContextCompat.checkSelfPermission(getApplicationContext(),
-							Manifest.permission.WRITE_EXTERNAL_STORAGE)==PackageManager.PERMISSION_GRANTED) {
+							Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
 						takePictureIntent();
 					} else {
 						checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
@@ -350,10 +422,10 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 				if (grantResults.length > 0
 						&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					if (ContextCompat.checkSelfPermission(getApplicationContext(),
-							Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED) {
+							Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
 						takePictureIntent();
 					} else {
-						checkPermission(Manifest.permission.CAMERA,MY_PERMISSIONS_CAMERA_REQUEST);
+						checkPermission(Manifest.permission.CAMERA, MY_PERMISSIONS_CAMERA_REQUEST);
 					}
 				}
 				return;
@@ -362,13 +434,13 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	}
 
 
-	private void sendImageToLaserPlotter(String svgString){
+	private void sendImageToLaserPlotter(String svgString) {
 		final String svgData = svgString;
 		PrinterConnection.OnConnectionCallBack onConnectionCallBack = new PrinterConnection.OnConnectionCallBack() {
 			@Override
 			public void connectionEstablished() {
 				Log.d(TAG, "connectionEstablished: ");
-				tts.speak(getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_ADD, null,utteranceId);
+				tts.speak(getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_ADD, null, utteranceId);
 				sendCommands(printerConnector, svgData);
 			}
 
@@ -387,13 +459,13 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 			}
 		};
-		printerConnector = new PrinterConnector(PrinterConnector.Mode.TCP,getString(R.string.bluetooth_device_name),"192.168.42.132", 8090,
-				getApplicationContext(),onConnectionCallBack);
-		if (printerConnector.device == null || printerConnector.connection == null){
+		printerConnector = new PrinterConnector(PrinterConnector.Mode.TCP, getString(R.string.bluetooth_device_name), "192.168.42.132", 8090,
+				getApplicationContext(), onConnectionCallBack);
+		if (printerConnector.device == null || printerConnector.connection == null) {
 			tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 			printerConnector.initializeConnection();
 		} else {
-			if (!printerConnector.connection.isConnected()){
+			if (!printerConnector.connection.isConnected()) {
 				tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				printerConnector.initializeConnection();
 			} else {
@@ -404,14 +476,14 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	}
 
 
-	protected void sendCommands(PrinterConnector printerConnector, String svgString){
+	protected void sendCommands(PrinterConnector printerConnector, String svgString) {
 		//parser = new SVGParser(svgString,true);
-		parser = new SVGParser(svgString, new PointF(20,20));
+		parser = new SVGParser(svgString, new PointF(20, 20));
 		ArrayList<Instruction> instructions = new ArrayList<>();
 		parser.setInstructions(instructions);
 		parser.startParsing();
 
-		for (Instruction instruction : instructions){
+		for (Instruction instruction : instructions) {
 			Log.d("Connection", "sending instruction " + instruction.buildInstruction(Instruction.Mode.GPGL));
 			printerConnector.connection.write(instruction.buildInstruction(Instruction.Mode.GPGL));
 		}
@@ -420,6 +492,10 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 	@Override
 	public void onSpeechRecognized(String message) {
+		parseSpeechInput(message);
+	}
+
+	private void parseSpeechInput(String message) {
 		Log.d("receiver", "Got message: " + message);
 		switch (message) {
 			case "take picture":
@@ -455,7 +531,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 				tts.speak(getString(R.string.available_speech_commands), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				break;
 			default:
-				//tts.speak("Das wurde nicht richtig verstanden", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+				tts.speak("Das wurde nicht richtig verstanden. " + getString(R.string.available_speech_commands) , TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				Log.d("receiver", "no action recognized");
 				break;
 
@@ -463,8 +539,32 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		/*if (message.contains("Foto") || message.contains("picture")){
 			tts.speak("Das wurde nicht richtig verstanden", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 		}*/
-
 	}
 
 
+	/**
+	 * ATTENTION: This was auto-generated to implement the App Indexing API.
+	 * See https://g.co/AppIndexing/AndroidStudio for more information.
+	 */
+	public Action getIndexApiAction() {
+		Thing object = new Thing.Builder()
+				.setName("FotoApp Page") // TODO: Define a title for the content shown.
+				// TODO: Make sure this auto-generated URL is correct.
+				.setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+				.build();
+		return new Action.Builder(Action.TYPE_VIEW)
+				.setObject(object)
+				.setActionStatus(Action.STATUS_TYPE_COMPLETED)
+				.build();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+
+		// ATTENTION: This was auto-generated to implement the App Indexing API.
+		// See https://g.co/AppIndexing/AndroidStudio for more information.
+		AppIndex.AppIndexApi.end(client, getIndexApiAction());
+		client.disconnect();
+	}
 }

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 /**
  * Created by Julius on 20.01.2017.
@@ -13,11 +12,12 @@ import android.util.Log;
 
 public class SpeechRecognitionHandler {
     Context context;
+
     public interface OnSpeechRecognizedListener{
         void onSpeechRecognized(String message);
     }
     public static final String RECEIVED_SPEECH = "received_speech";
-    private OnSpeechRecognizedListener listener;
+    protected OnSpeechRecognizedListener listener;
     private BroadcastReceiver broadcastReceiver=new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -41,16 +41,15 @@ public class SpeechRecognitionHandler {
     }
 
 
-
-    public void startSpeechRecognition(){
-        context.startService(new Intent(context, VoiceRecogService.class));
+    public void startContinuousSpeechRecognition(){
+        context.startService(new Intent(context, ContinuousVoiceRecogService.class));
         LocalBroadcastManager.getInstance(context).registerReceiver(broadcastReceiver,
                 new IntentFilter(SpeechRecognitionHandler.RECEIVED_SPEECH));
 
     }
 
-    public void stopSpeechRecognition(){
-        context.stopService(new Intent(context, VoiceRecogService.class));
+    public void stopContinuousSpeechRecognition(){
+        context.stopService(new Intent(context, ContinuousVoiceRecogService.class));
         LocalBroadcastManager.getInstance(context).unregisterReceiver(broadcastReceiver);
     }
 

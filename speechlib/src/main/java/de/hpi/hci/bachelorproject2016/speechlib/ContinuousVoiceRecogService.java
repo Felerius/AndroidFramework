@@ -30,7 +30,7 @@ import static android.content.ContentValues.TAG;
  */
 
 
-public class VoiceRecogService extends Service
+public class ContinuousVoiceRecogService extends Service
 {
     protected static AudioManager mAudioManager;
     protected SpeechRecognizer mSpeechRecognizer;
@@ -69,18 +69,18 @@ public class VoiceRecogService extends Service
 
     protected static class IncomingHandler extends Handler
     {
-        private WeakReference<VoiceRecogService> mtarget;
+        private WeakReference<ContinuousVoiceRecogService> mtarget;
 
-        IncomingHandler(VoiceRecogService target)
+        IncomingHandler(ContinuousVoiceRecogService target)
         {
-            mtarget = new WeakReference<VoiceRecogService>(target);
+            mtarget = new WeakReference<ContinuousVoiceRecogService>(target);
         }
 
 
         @Override
         public void handleMessage(Message msg)
         {
-            final VoiceRecogService target = mtarget.get();
+            final ContinuousVoiceRecogService target = mtarget.get();
 
             switch (msg.what)
             {

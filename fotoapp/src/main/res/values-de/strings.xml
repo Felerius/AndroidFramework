@@ -5,11 +5,11 @@
     <string name="sending_img_laser_plotter">Sende Bild an den Laser plotter</string>
     <string name="lost_connection">Die Verbindung zum Laser plotter wurde getrennt</string>
     <string name="could_not_connect">Verbindung mit dem Laser plotter konnte nicht hergestellt werden. Bitte überprüfe, ob er eingeschaltet ist?</string>
-    <string name="started_foto_app">FotoApp wurde gestartet. </string>
-    <string name="available_speech_commands">Verfügbare Sprach-Kommandos sind \'Foto aufnehmen\' und \'Foto auswählen\'.</string>
+    <string name="started_foto_app">Willkommen bei FotoApp. Mit dieser App kannst du Bilder aufnehmen und auswählen, die dann direkt an deinen Laser plotter gesendet werden und dann gedruckt werden.</string>
+    <string name="available_speech_commands">Wenn du die Lautstärketasten an der Seite deines Smartphones drückst, öffnest du die Spracheingabe. Verfügbare Sprach-Kommandos sind dann \'Foto aufnehmen\' und \'Foto auswählen\'.</string>
     <string name="on_open_camera">Öffne Kamera. Tippe den Bildschirm doppelt an, um ein Foto aufzunehmen.</string>
     <string name="on_choose_picture">Öffne das Album. Suche ein Bild aus, das gedruckt werden soll.</string>
-    <string name="you_can_always_say_help">Du kannst jederzeit \'Hilfe\' sagen, um die aktuellen Optionen zu hören.</string>
+    <string name="you_can_always_say_help">Außerdem kannst du jederzeit \'Hilfe\' sagen, um die aktuellen Optionen zu hören.</string>
     <string name="picked_picture">Foto ausgewählt</string>
     <string name="took_picture">Foto aufgenommen</string>
     <string name="take_a_picture_button_text">Foto aufnehmen</string>
