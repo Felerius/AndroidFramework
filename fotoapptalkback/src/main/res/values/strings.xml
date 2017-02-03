@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FotoApp</string>
+    <string name="app_name">FotoAppTalkback</string>
     <string name="bluetooth_device_name">raspberrypi</string>
     <string name="connecting_laser_plotter">Connecting to laser plotter to print the image</string>
     <string name="sending_img_laser_plotter">Sending image to laser plotter</string>

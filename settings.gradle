@@ -1,1 +1,1 @@
-include ':braillelib', ':speechlib', ':svgparser', ':fotoapp', ':bluetoothlib'
+include ':braillelib', ':speechlib', ':svgparser', ':fotoapp', ':bluetoothlib', ':fotoapptalkback'

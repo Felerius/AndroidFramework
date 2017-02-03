@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PointF;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -41,6 +42,7 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.concurrent.ScheduledExecutorService;
@@ -197,7 +199,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 		//Volume button listener instantiation
 		AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-		audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)-7, AudioManager.FLAG_VIBRATE);
+		audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)-5, AudioManager.FLAG_VIBRATE);
 
 		mContentObserver = new VolumeButtonObserver(this, handler);
 		getApplicationContext().getContentResolver().registerContentObserver(Settings.System.CONTENT_URI,
@@ -240,7 +242,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 			public void onClick(View view) {
 				//checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
 				//checkPermission(Manifest.permission.CAMERA,MY_PERMISSIONS_CAMERA_REQUEST);
-				takePictureIntent();
+				openCamera(false);
 			}
 		});
 		ll.addView(b1);
@@ -256,6 +258,28 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 			}
 		});
 		ll.addView(b2);
+
+		// Button 3
+		Button b3 = new Button(getApplicationContext());
+		b3.setText(R.string.btn_take_a_picture_instantly);
+		b3.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				openCamera(true);
+			}
+		});
+		ll.addView(b3);
+
+		// Button help
+		Button help = new Button(getApplicationContext());
+		help.setText("Help");
+		help.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				tts.speak(getString(R.string.open_speech_instruction) +  getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
+			}
+		});
+		ll.addView(help);
 
 
 		// Displaying UI
@@ -370,27 +394,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	}
 
 	private void takePictureIntent() {
-		try {
-			// Starting an Intent to take a picture
-			tts.speak(getString(R.string.on_open_camera), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-			/*String file = dir+"test.jpg";
-			File newfile = new File(file);
-
-			try {
-				newfile.createNewFile();
-			}
-			catch (IOException e)
-			{
-			}
-
-			Uri outputFileUri = Uri.fromFile(newfile);
-*/
-			Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//			cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
-			startActivityForResult(cameraIntent, CAMERA_REQUEST);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		openCamera(true);
 	}
 
 
@@ -437,8 +441,24 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if ((requestCode == CAMERA_REQUEST) && (resultCode == Activity.RESULT_OK)) {
+			tts.speak(getString(R.string.took_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+			Bitmap picture = null;
+			if (data.getData() != null){
+				Log.d("FotoAppActivity", "resolving uri");
+				Uri uri = data.getData();
+				BitmapFactory.Options options = new BitmapFactory.Options();
+				options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+				try {
+					picture = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+					picture = ImageTransformator.compressImage(picture);
 
-			Bitmap picture = (Bitmap) data.getExtras().get("data");
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} else {
+				picture = (Bitmap) data.getExtras().get("data");
+			}
+
 			Log.d("Camera request", "received img from cam");
 			Log.d("Camera request", picture.toString());
 
@@ -456,7 +476,6 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 				}
 
 				wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
-				tts.speak(getString(R.string.took_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				sendImageToLaserPlotter(svgString);
 			} catch (Exception e) {
 				Log.e(" Error tracing photo ", e.toString());
@@ -590,6 +609,9 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 					//checkPermission(Manifest.permission.CAMERA,MY_PERMISSIONS_CAMERA_REQUEST);
 					takePictureIntent();
 					return;
+				case "Open camera":
+				case "Öffne Camera":
+					openCamera(false);
 				case "choose picture":
 				case "pick picture":
 				case "Foto auswählen":
@@ -625,6 +647,38 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		/*if (message.contains("Foto") || message.contains("picture")){
 			tts.speak("Das wurde nicht richtig verstanden", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 		}*/
+	}
+
+	private void openCamera(boolean takePictureInstantly) {
+		try {
+			// Starting an Intent to take a picture
+			if (takePictureInstantly==true){
+				tts.speak(getString(R.string.taking_picture_please_wait_a_bit), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+			} else {
+				tts.speak(getString(R.string.on_open_camera), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+			}
+			/*String file = dir+"test.jpg";
+			File newfile = new File(file);
+
+			try {
+				newfile.createNewFile();
+			}
+			catch (IOException e)
+			{
+			}
+
+			Uri outputFileUri = Uri.fromFile(newfile);
+*/
+			//Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//			cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+			//startActivityForResult(cameraIntent, CAMERA_REQUEST);
+			Intent cameraIntent = new Intent(this,CameraActivity.class);
+			cameraIntent.putExtra(Constants.TAKE_PICTURE_INSTANTLY, takePictureInstantly);
+			startActivityForResult(cameraIntent, CAMERA_REQUEST);
+			//startActivity(cameraIntent);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 
