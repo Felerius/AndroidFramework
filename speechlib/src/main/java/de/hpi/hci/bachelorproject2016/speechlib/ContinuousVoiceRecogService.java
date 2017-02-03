@@ -59,11 +59,11 @@ public class ContinuousVoiceRecogService extends Service
         mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
     }
 
-    private void sendMessage(String message) {
-        Log.d("Broadcast", "broadcasting " + message);
+    private void sendMessage(String[] messages) {
+        Log.d("Broadcast", "broadcasting " + messages);
         Intent intent = new Intent(SpeechRecognitionHandler.RECEIVED_SPEECH);
         // add data
-        intent.putExtra("message", message);
+        intent.putExtra("message", messages);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
@@ -260,9 +260,8 @@ public class ContinuousVoiceRecogService extends Service
                 sendMessage("choose");
             }
 */
-            for (String result : data){
-                sendMessage(result);
-            }
+            sendMessage(data.toArray(new String[0]));
+
             mSpeechRecognizer.cancel();
             mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
 

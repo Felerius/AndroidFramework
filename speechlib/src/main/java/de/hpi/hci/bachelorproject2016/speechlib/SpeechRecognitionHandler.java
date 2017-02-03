@@ -14,7 +14,7 @@ public class SpeechRecognitionHandler {
     Context context;
 
     public interface OnSpeechRecognizedListener{
-        void onSpeechRecognized(String message);
+        void onSpeechRecognized(String[] messages);
     }
     public static final String RECEIVED_SPEECH = "received_speech";
     protected OnSpeechRecognizedListener listener;
@@ -23,8 +23,8 @@ public class SpeechRecognitionHandler {
         public void onReceive(Context context, Intent intent) {
             String action=intent.getAction();
             if(action.equals(RECEIVED_SPEECH)|| action.equals(context.getPackageName()+"."+RECEIVED_SPEECH)){
-                String message=intent.getStringExtra("message");
-                if(listener!=null)listener.onSpeechRecognized(message);
+                String[] messages=intent.getStringArrayExtra("message");
+                if(listener!=null)listener.onSpeechRecognized(messages);
             }
         }
     };

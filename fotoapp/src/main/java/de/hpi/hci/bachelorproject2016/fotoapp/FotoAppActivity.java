@@ -2,25 +2,30 @@ package de.hpi.hci.bachelorproject2016.fotoapp;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -29,7 +34,6 @@ import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Toast;
 
 
 import com.google.android.gms.appindexing.Action;
@@ -37,10 +41,8 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -56,16 +58,62 @@ import de.hpi.hci.bachelorproject2016.svgparser.SVGParser;
 
 import static android.content.ContentValues.TAG;
 
-public class FotoAppActivity extends Activity implements SpeechRecognitionHandler.OnSpeechRecognizedListener {
+public class FotoAppActivity extends Activity implements SpeechRecognitionHandler.OnSpeechRecognizedListener, SensorEventListener {
 
 	private static final int PICK_IMAGE_REQUEST = 2;
 	private static final int CAMERA_REQUEST = 1;
 	private static final int MY_PERMISSIONS_CAMERA_REQUEST = 100;
 	private static final int MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST = 101;
-	public static final int REPEAT_INSTRUCTIONS_TIME = 30000;
-	private final ScheduledExecutorService scheduler =
-			Executors.newScheduledThreadPool(1);
-	SettingsContentObserver mContentObserver;
+	public static final int REPEAT_INSTRUCTIONS_TIME = 60000;
+	public static final String FIRST_INSTRUCTIONS = "FirstInstructions";
+	public static final String CONNECTING = "connecting";
+
+	public static boolean isVisible() {
+		return isVisible;
+	}
+
+	public static void setIsVisible(boolean isVisible) {
+		FotoAppActivity.isVisible = isVisible;
+	}
+
+	private SensorManager mSensorManager;
+
+
+	//Shake event handling
+	private float mAccel; // acceleration apart from gravity
+	private float mAccelCurrent; // current acceleration including gravity
+	private float mAccelLast; // last acceleration including gravity
+	private long timeOfLastShakeEvent = System.currentTimeMillis();
+	//Volume button event handling
+	VolumeButtonObserver mContentObserver;
+
+	private final Handler handler = new Handler() {
+
+		public void handleMessage(Message msg) {
+
+			Log.i("resp", "volume changed");
+			if (speechHandler != null) {
+				activateSpeechInput();
+
+			}
+
+
+		}
+	};
+
+	private void activateSpeechInput() {
+		if (speechHandler != null) {
+			speechHandler.startSingleSpeechRecognition();
+		}
+		if (tts!= null){
+			tts.stop();
+		}
+		firstActivatedSpeechInput = true;
+	}
+
+	protected static boolean isVisible = false;
+
+	//SVG parsing
 	SVGParser parser;
 	String svgString = "";
 	PrinterConnector printerConnector;
@@ -90,18 +138,34 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	String utteranceId = this.hashCode() + "";
 	//SpeechRecognitionHandler audioHandler;
 	SingleSpeechRecognitionHandler speechHandler;
-	private boolean firstPressedVolumeButtons = false;
-	private final Handler handler = new Handler() {
+	private boolean firstActivatedSpeechInput = false;
 
-		public void handleMessage(Message msg) {
 
-			Log.i("resp", "volume changed");
-			if (speechHandler != null) {
-				speechHandler.startSingleSpeechRecognition();
-				firstPressedVolumeButtons = true;
+	UtteranceProgressListener utteranceProgressListener = new UtteranceProgressListener() {
+		@Override
+		public void onStart(String s) {
+
+		}
+
+		@Override
+		public void onDone(String s) {
+
+		}
+
+		@Override
+		public void onError(String s) {
+
+		}
+
+		@Override
+		public void onStop(String s, boolean interrupted){
+			if (isVisible()) {
+				if (s.equals(FIRST_INSTRUCTIONS)) {
+					tts.speak(getString(R.string.open_speech_instruction) +  getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
+				} else if (s.equals(CONNECTING)) {
+					tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_ADD, null, utteranceId);
+				}
 			}
-
-
 		}
 	};
 
@@ -120,27 +184,36 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
-		displaymetrics = new DisplayMetrics();
-		getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-		dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/picFolder/";
-		File newdir = new File(dir);
-		newdir.mkdirs();
-		mContentObserver = new SettingsContentObserver(this, handler);
+		//displaymetrics = new DisplayMetrics();
+		//getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+
+
+		//Shake listener instantiation
+		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+		mAccel = 0.00f;
+		mAccelCurrent = SensorManager.GRAVITY_EARTH;
+		mAccelLast = SensorManager.GRAVITY_EARTH;
+
+		//Volume button listener instantiation
+		AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)-7, AudioManager.FLAG_VIBRATE);
+
+		mContentObserver = new VolumeButtonObserver(this, handler);
 		getApplicationContext().getContentResolver().registerContentObserver(Settings.System.CONTENT_URI,
 				true, mContentObserver);
-		firstPressedVolumeButtons = false;
+		firstActivatedSpeechInput = false;
 		//checkWriteToStoragePermission();
 		//checkPermission();
 		//audioHandler = new SpeechRecognitionHandler(getApplicationContext(),this);
-		speechHandler = new SingleSpeechRecognitionHandler(getApplicationContext(), this);
 
 		initTTS();
 		ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
 		executorService.schedule(new Runnable() {
 			@Override
 			public void run() {
-				if (firstPressedVolumeButtons == false) {
-					tts.speak(getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, utteranceId);
+				if (firstActivatedSpeechInput == false) {
+					tts.speak(getString(R.string.open_speech_instruction) + getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
 
 				}
 			}
@@ -221,7 +294,8 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 							|| result == TextToSpeech.LANG_NOT_SUPPORTED) {
 						Log.e("TTS", "This Language is not supported");
 					}
-					tts.speak(getString(R.string.started_foto_app) + getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, utteranceId);
+					tts.setOnUtteranceProgressListener(utteranceProgressListener);
+					tts.speak(getString(R.string.started_foto_app) + getString(R.string.open_speech_instruction) + getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
 
 					//audioHandler.startSpeechRecognition();
 
@@ -234,6 +308,10 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 	public void onPause() {
 		super.onPause();
+		setIsVisible(false);
+		mSensorManager.unregisterListener(this);
+		speechHandler.destroySpeechRecognizer();
+		getContentResolver().unregisterContentObserver(mContentObserver);
 		//audioHandler.stopSpeechRecognition();
 		//tts.speak("Fotoapp wird geschlossen", TextToSpeech.QUEUE_FLUSH,null,utteranceId);
 
@@ -241,6 +319,10 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 	public void onResume() {
 		super.onResume();
+		setIsVisible(true);
+		mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+		speechHandler = new SingleSpeechRecognitionHandler(getApplicationContext(), this);
+		getContentResolver().registerContentObserver(Settings.System.CONTENT_URI, true, mContentObserver);
 		//audioHandler.startSpeechRecognition();
 
 	}
@@ -462,7 +544,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		printerConnector = new PrinterConnector(PrinterConnector.Mode.TCP, getString(R.string.bluetooth_device_name), "192.168.42.132", 8090,
 				getApplicationContext(), onConnectionCallBack);
 		if (printerConnector.device == null || printerConnector.connection == null) {
-			tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+			tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_ADD, null, CONNECTING);
 			printerConnector.initializeConnection();
 		} else {
 			if (!printerConnector.connection.isConnected()) {
@@ -491,51 +573,55 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 
 	@Override
-	public void onSpeechRecognized(String message) {
-		parseSpeechInput(message);
+	public void onSpeechRecognized(String[] messages) {
+		parseSpeechInput(messages);
 	}
 
-	private void parseSpeechInput(String message) {
-		Log.d("receiver", "Got message: " + message);
-		switch (message) {
-			case "take picture":
-			case "Foto machen":
-			case "take a picture":
-			case "Foto schießen":
-			case "Foto aufnehmen":
-				//checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
-				//checkPermission(Manifest.permission.CAMERA,MY_PERMISSIONS_CAMERA_REQUEST);
-				takePictureIntent();
-				return;
-			case "choose picture":
-			case "pick picture":
-			case "Foto auswählen":
-			case "choose a picture":
-			case "pick a picture":
-				pickPictureIntent();
-				return;
-			case "set mode bluetooth":
-				setConnectionMode(PrinterConnector.Mode.BLUETOOTH);
-				tts.speak("Setting mode to bluetooth", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-				break;
-			case "set mode tcp":
-			case "set mode debug":
-			case "set mode debugging":
-				setConnectionMode(PrinterConnector.Mode.TCP);
-				tts.speak("Setting mode to debug", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-				break;
-			case "help":
-			case "options":
-			case "hilfe":
-			case "Optionen":
-				tts.speak(getString(R.string.available_speech_commands), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-				break;
-			default:
-				tts.speak("Das wurde nicht richtig verstanden. " + getString(R.string.available_speech_commands) , TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-				Log.d("receiver", "no action recognized");
-				break;
+	private void parseSpeechInput(String[] messages) {
+		Log.d("receiver", "Got message: " + messages);
+		for (String message : messages) {
+			switch (message) {
+				case "take picture":
+				case "Foto machen":
+				case "take a picture":
+				case "Foto schießen":
+				case "Foto aufnehmen":
+					//checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
+					//checkPermission(Manifest.permission.CAMERA,MY_PERMISSIONS_CAMERA_REQUEST);
+					takePictureIntent();
+					return;
+				case "choose picture":
+				case "pick picture":
+				case "Foto auswählen":
+				case "choose a picture":
+				case "pick a picture":
+					pickPictureIntent();
+					return;
+				case "set mode bluetooth":
+					setConnectionMode(PrinterConnector.Mode.BLUETOOTH);
+					tts.speak("Setting mode to bluetooth", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+					return;
+				case "set mode tcp":
+				case "set mode debug":
+				case "set mode debugging":
+					setConnectionMode(PrinterConnector.Mode.TCP);
+					tts.speak("Setting mode to debug", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+					return;
+				case "help":
+				case "options":
+				case "hilfe":
+				case "Optionen":
+					tts.speak(getString(R.string.available_speech_commands), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+					return;
+				default:
+					Log.d("receiver", "no action recognized");
+					break;
 
+			}
 		}
+		tts.speak("Das wurde nicht richtig verstanden. " + getString(R.string.available_speech_commands) , TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+
+
 		/*if (message.contains("Foto") || message.contains("picture")){
 			tts.speak("Das wurde nicht richtig verstanden", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 		}*/
@@ -566,5 +652,28 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		// See https://g.co/AppIndexing/AndroidStudio for more information.
 		AppIndex.AppIndexApi.end(client, getIndexApiAction());
 		client.disconnect();
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent se) {
+		float x = se.values[0];
+		float y = se.values[1];
+		float z = se.values[2];
+		mAccelLast = mAccelCurrent;
+		mAccelCurrent = (float) Math.sqrt((double) (x*x + y*y + z*z));
+		float delta = mAccelCurrent - mAccelLast;
+		mAccel = mAccel * 0.9f + delta; // perform low-cut filter
+		Log.d("Shaking", "shaked " + mAccel);
+		if (mAccel > 12 && System.currentTimeMillis() - timeOfLastShakeEvent >5000) {
+			//Toast toast = Toast.makeText(getApplicationContext(), "Gerät wurde geschaket.", Toast.LENGTH_LONG);
+			//toast.show();
+			timeOfLastShakeEvent = System.currentTimeMillis();
+				activateSpeechInput();
+			}
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int i) {
+
 	}
 }

@@ -28,6 +28,12 @@ public class SingleSpeechRecognitionHandler extends SpeechRecognitionHandler {
         mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
     }
 
+    public void destroySpeechRecognizer(){
+        mSpeechRecognizer.cancel();
+        mSpeechRecognizer.destroy();
+
+    }
+
     private void initializeSpeechRecognition(){
         mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
         mSpeechRecognizer.setRecognitionListener(new RecognitionListener() {
@@ -65,9 +71,9 @@ public class SingleSpeechRecognitionHandler extends SpeechRecognitionHandler {
             public void onResults(Bundle bundle) {
                 Log.d(TAG, "onResults"); //$NON-NLS-1$
                 ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                for (String result : data){
-                    if(listener!=null)listener.onSpeechRecognized(result);
-                }
+
+                if(listener!=null)listener.onSpeechRecognized(data.toArray(new String[0]));
+
             }
 
             @Override
