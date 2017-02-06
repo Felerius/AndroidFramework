@@ -1,20 +1,23 @@
 <resources>
     <string name="app_name">FotoApp</string>
     <string name="bluetooth_device_name">raspberrypi</string>
-    <string name="connecting_laser_plotter">Connecting to laser plotter to print the image</string>
+    <string name="connecting_laser_plotter">Connecting to laser plotter to print the image. This may take a while.</string>
     <string name="sending_img_laser_plotter">Sending image to laser plotter</string>
     <string name="lost_connection">Lost connection to laser plotter</string>
     <string name="could_not_connect">Could not connect to laser plotter. Is it turned on?</string>
     <string name="started_foto_app">Started FotoApp. </string>
     <string name="available_speech_commands">Available speech commands are \'take picture\', \'open camera\' and \'choose picture\'.</string>
-    <string name="on_open_camera">"Opening camera. "</string>
+    <string name="on_open_camera">\"Opening camera. Double tap the screen to take a picture\"</string>
     <string name="on_choose_picture">Opening album. Choose a picture to print.</string>
     <string name="you_can_always_say_help">Furthermore you can always say \'help\' to hear available speech commands.</string>
     <string name="picked_picture">Picked picture</string>
     <string name="took_picture">Took picture</string>
     <string name="pick_a_picture_button_text">Pick a picture</string>
     <string name="open_speech_instruction" >"By double-pressing the volume-buttons on the side of your phone you open the speech-input. "</string>
-    <string name="btn_take_a_picture_instantly">Take a picture instantly</string>
+    <string name="btn_take_a_picture_instantly">Take a picture</string>
     <string name="take_a_picture_button_text">Open camera</string>
     <string name="taking_picture_please_wait_a_bit">Taking picture. Please wait a bit and don\'t move the camera.</string>
+    <string name="help">help</string>
+    <string name="btn_speech_input">Speech input</string>
+    <string name="connection_established">"Connection established. "</string>
 </resources>

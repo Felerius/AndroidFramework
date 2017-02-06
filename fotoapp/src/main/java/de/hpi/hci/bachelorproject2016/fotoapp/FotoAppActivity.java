@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -29,12 +28,8 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.Window;
-import android.view.WindowManager;
 import android.webkit.WebView;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
 
 
 import com.google.android.gms.appindexing.Action;
@@ -78,11 +73,19 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		FotoAppActivity.isVisible = isVisible;
 	}
 
-	private SensorManager mSensorManager;
+
+	//UI
+	Button takePictureBtn;
+	Button pickPictureBtn;
+	Button openCameraBtn;
+	Button speechInputBtn;
+	WebView wv;
+
 
 
 	//Shake event handling
 	private float mAccel; // acceleration apart from gravity
+	private SensorManager mSensorManager;
 	private float mAccelCurrent; // current acceleration including gravity
 	private float mAccelLast; // last acceleration including gravity
 	private long timeOfLastShakeEvent = System.currentTimeMillis();
@@ -171,7 +174,6 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		}
 	};
 
-	WebView wv;
 
 
 	String mimeType = "text/html";
@@ -181,11 +183,11 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		setContentView(R.layout.activity_foto_app);
 		// Window style and metrics
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		/*requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);*/
 		//displaymetrics = new DisplayMetrics();
 		//getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
 
@@ -223,7 +225,44 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 
 		// UI
-		ScrollView sv = new ScrollView(getApplicationContext());
+		openCameraBtn = (Button) findViewById(R.id.btn_open_camera);
+		pickPictureBtn = (Button) findViewById(R.id.btn_pick_picture);
+		takePictureBtn = (Button) findViewById(R.id.btn_take_picture);
+		speechInputBtn = (Button) findViewById(R.id.btn_help);
+		openCameraBtn.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				//checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
+				//checkPermission(Manifest.permission.CAMERA,MY_PERMISSIONS_CAMERA_REQUEST);
+				openCamera(false);
+			}
+		});
+
+		pickPictureBtn.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				pickPictureIntent();
+
+			}
+		});
+
+		takePictureBtn.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				openCamera(true);
+			}
+		});
+
+		speechInputBtn.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				activateSpeechInput();
+			}
+		});
+		wv = (WebView) findViewById(R.id.web_view);
+
+
+		/*ScrollView sv = new ScrollView(getApplicationContext());
 
 		// Layout
 		LinearLayout ll = new LinearLayout(getApplicationContext());
@@ -279,11 +318,11 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 				tts.speak(getString(R.string.open_speech_instruction) +  getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
 			}
 		});
-		ll.addView(help);
+		ll.addView(help);*/
 
 
 		// Displaying UI
-		setContentView(sv);
+		//setContentView(sv);
 		handleIncomingIntents();
 
 
@@ -541,7 +580,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 			@Override
 			public void connectionEstablished() {
 				Log.d(TAG, "connectionEstablished: ");
-				tts.speak(getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_ADD, null, utteranceId);
+				tts.speak(getString(R.string.connection_established) + getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_ADD, null, utteranceId);
 				sendCommands(printerConnector, svgData);
 			}
 

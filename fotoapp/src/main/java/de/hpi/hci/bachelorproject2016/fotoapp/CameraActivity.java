@@ -52,7 +52,7 @@ import static de.hpi.hci.bachelorproject2016.fotoapp.Constants.TAKE_PICTURE_INST
 
 public class CameraActivity extends Activity {
     private static final String TAG = "AndroidCameraApi";
-    private Button takePictureButton;
+    //private Button takePictureButton;
     private TextureView textureView;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     static {
@@ -81,14 +81,20 @@ public class CameraActivity extends Activity {
         textureView = (TextureView) findViewById(R.id.texture);
         assert textureView != null;
         textureView.setSurfaceTextureListener(textureListener);
-        takePictureButton = (Button) findViewById(R.id.btn_takepicture);
-        assert takePictureButton != null;
-        takePictureButton.setOnClickListener(new View.OnClickListener() {
+        textureView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                takePicture();
+            }
+        });
+        //takePictureButton = (Button) findViewById(R.id.btn_takepicture);
+        //assert takePictureButton != null;
+        /*takePictureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 takePicture();
             }
-        });
+        });*/
         Intent incomingIntent = getIntent();
         takePictureInstantly = incomingIntent.getBooleanExtra(Constants.TAKE_PICTURE_INSTANTLY, false);
     }
