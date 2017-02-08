@@ -1,4 +1,4 @@
-package de.hpi.hci.bachelorproject2016.fotoapp;
+package de.hpi.hci.bachelorproject2016.fotoapptalkback;
 
 import android.Manifest;
 import android.app.Activity;
@@ -12,14 +12,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.provider.MediaStore;
-import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.support.v4.app.ActivityCompat;
@@ -31,7 +27,6 @@ import android.view.View.OnClickListener;
 import android.webkit.WebView;
 import android.widget.Button;
 
-
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
@@ -40,87 +35,54 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnection;
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnector;
-import de.hpi.hci.bachelorproject2016.fotoapp.ImageProcessing.ImageTracerAndroid;
-import de.hpi.hci.bachelorproject2016.fotoapp.ImageProcessing.ImageTransformator;
+import de.hpi.hci.bachelorproject2016.fotoapptalkback.ImageProcessing.ImageTracerAndroid;
+import de.hpi.hci.bachelorproject2016.fotoapptalkback.ImageProcessing.ImageTransformator;
 import de.hpi.hci.bachelorproject2016.speechlib.SingleSpeechRecognitionHandler;
-import de.hpi.hci.bachelorproject2016.speechlib.SpeechRecognitionHandler;
 import de.hpi.hci.bachelorproject2016.svgparser.Instruction;
 import de.hpi.hci.bachelorproject2016.svgparser.SVGParser;
 
 import static android.content.ContentValues.TAG;
 
-public class FotoAppActivity extends Activity implements SpeechRecognitionHandler.OnSpeechRecognizedListener, SensorEventListener {
+public class MainActivity extends Activity implements SensorEventListener {
 
-	private static final int PICK_IMAGE_REQUEST = 2;
+    private static final int PICK_IMAGE_REQUEST = 2;
 	private static final int CAMERA_REQUEST = 1;
 	private static final int MY_PERMISSIONS_CAMERA_REQUEST = 100;
-	private static final int MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST = 101;
+    private static final int MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST = 101;
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 102;
-	public static final int REPEAT_INSTRUCTIONS_TIME = 60000;
-	public static final String FIRST_INSTRUCTIONS = "FirstInstructions";
+    public static final String FIRST_INSTRUCTIONS = "FirstInstructions";
 	public static final String CONNECTING = "connecting";
+	public static final String ON_OPEN_CAMERA = "onOpenCamera";
+	public static final String ON_OPEN_ALBUM = "onOpenAlbum";
+    public static final int SLEEPTIME = 4000;
 
-	public static boolean isVisible() {
+
+
+    public static boolean isVisible() {
 		return isVisible;
 	}
 
 	public static void setIsVisible(boolean isVisible) {
-		FotoAppActivity.isVisible = isVisible;
+		MainActivity.isVisible = isVisible;
 	}
+
+	protected static boolean isVisible = false;
+
+
+	//Shake event handling
+	private SensorManager mSensorManager;
+	private float mAccel; // acceleration apart from gravity
+	private float mAccelCurrent; // current acceleration including gravity
+	private float mAccelLast; // last acceleration including gravity
+	private long timeOfLastShakeEvent = System.currentTimeMillis();
 
 
 	//UI
 	Button takePictureBtn;
 	Button pickPictureBtn;
-	Button openCameraBtn;
-	Button speechInputBtn;
 	WebView wv;
-
-
-
-	boolean takePictureInstantly = false;
-
-
-	//Shake event handling
-	private float mAccel; // acceleration apart from gravity
-	private SensorManager mSensorManager;
-	private float mAccelCurrent; // current acceleration including gravity
-	private float mAccelLast; // last acceleration including gravity
-	private long timeOfLastShakeEvent = System.currentTimeMillis();
-	//Volume button event handling
-	VolumeButtonObserver mContentObserver;
-
-	private final Handler handler = new Handler() {
-
-		public void handleMessage(Message msg) {
-
-			Log.i("resp", "volume changed");
-			if (speechHandler != null) {
-				activateSpeechInput();
-
-			}
-
-
-		}
-	};
-
-	private void activateSpeechInput() {
-		if (speechHandler != null) {
-			speechHandler.startSingleSpeechRecognition();
-		}
-		if (tts!= null){
-			tts.stop();
-		}
-		firstActivatedSpeechInput = true;
-	}
-
-	protected static boolean isVisible = false;
 
 	//SVG parsing
 	SVGParser parser;
@@ -147,7 +109,6 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	String utteranceId = this.hashCode() + "";
 	//SpeechRecognitionHandler audioHandler;
 	SingleSpeechRecognitionHandler speechHandler;
-	private boolean firstActivatedSpeechInput = false;
 
 
 	UtteranceProgressListener utteranceProgressListener = new UtteranceProgressListener() {
@@ -158,8 +119,10 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 		@Override
 		public void onDone(String s) {
-			if (s.equals(R.string.taking_picture_please_wait_a_bit) || s.equals(getString(R.string.on_open_camera))) {
-				openCameraIntent();
+			if (s.equals(getString(R.string.taking_picture_please_wait_a_bit))) {
+				Intent cameraIntent = new Intent(getApplicationContext(), CameraActivity.class);
+				cameraIntent.putExtra(Constants.TAKE_PICTURE_INSTANTLY, true);
+				startActivityForResult(cameraIntent, CAMERA_REQUEST);
 			}
 		}
 
@@ -171,15 +134,20 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		@Override
 		public void onStop(String s, boolean interrupted){
 			if (isVisible()) {
-				if (s.equals(FIRST_INSTRUCTIONS)) {
-					tts.speak(getString(R.string.open_speech_instruction) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
-				} else if (s.equals(CONNECTING)) {
-					tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_ADD, null, utteranceId);
-				}
-
-				if (s.equals(R.string.taking_picture_please_wait_a_bit) || s.equals(getString(R.string.on_open_camera))) {
-					tts.speak(s, TextToSpeech.QUEUE_ADD, null, s);
-				}
+				/*if (s.equals(FIRST_INSTRUCTIONS)) {
+                    tts.speak(getString(R.string.started_foto_app), TextToSpeech.QUEUE_ADD, null, utteranceId);
+                } else*/
+                if (s.equals(CONNECTING)) {
+                    tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_ADD, null, CONNECTING);
+                } else if (s.equals(ON_OPEN_CAMERA)){
+					tts.speak(getString(R.string.on_open_camera), TextToSpeech.QUEUE_FLUSH, null, ON_OPEN_CAMERA);
+				} else if (s.equals(ON_OPEN_ALBUM)) {
+                    tts.speak(getString(R.string.on_choose_picture), TextToSpeech.QUEUE_FLUSH, null, ON_OPEN_ALBUM);
+                } else if (s.equals(getString(R.string.taking_picture_please_wait_a_bit))){
+                    Intent cameraIntent = new Intent(getApplicationContext(), CameraActivity.class);
+                    cameraIntent.putExtra(Constants.TAKE_PICTURE_INSTANTLY, true);
+                    startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                }
 			}
 		}
 	};
@@ -193,65 +161,13 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_foto_app);
-		// Window style and metrics
-		/*requestWindowFeature(Window.FEATURE_NO_TITLE);
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);*/
-		//displaymetrics = new DisplayMetrics();
-		//getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-
-
-		//Shake listener instantiation
-		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-		mAccel = 0.00f;
-		mAccelCurrent = SensorManager.GRAVITY_EARTH;
-		mAccelLast = SensorManager.GRAVITY_EARTH;
-
-		//Volume button listener instantiation
-		AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-		audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)-5, AudioManager.FLAG_VIBRATE);
-
-		mContentObserver = new VolumeButtonObserver(this, handler);
-		getApplicationContext().getContentResolver().registerContentObserver(Settings.System.CONTENT_URI,
-				true, mContentObserver);
-		firstActivatedSpeechInput = false;
-		//checkWriteToStoragePermission();
-		//checkPermission();
-		//audioHandler = new SpeechRecognitionHandler(getApplicationContext(),this);
-
-		initTTS();
-
-        checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
-
-
-        ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
-		executorService.schedule(new Runnable() {
-			@Override
-			public void run() {
-				if (firstActivatedSpeechInput == false) {
-					tts.speak(getString(R.string.open_speech_instruction) + getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
-
-				}
-			}
-		}, REPEAT_INSTRUCTIONS_TIME, TimeUnit.MILLISECONDS);
-
 
 		// UI
-		openCameraBtn = (Button) findViewById(R.id.btn_open_camera);
 		pickPictureBtn = (Button) findViewById(R.id.btn_pick_picture);
 		takePictureBtn = (Button) findViewById(R.id.btn_take_picture);
-		speechInputBtn = (Button) findViewById(R.id.btn_help);
-		openCameraBtn.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				//checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
-				//checkPermission(Manifest.permission.CAMERA,MY_PERMISSIONS_CAMERA_REQUEST);
-				takePictureInstantly=false;
-				openCamera();
-			}
-		});
+		//helpBtn = (Button) findViewById(R.id.btn_help);
 
 		pickPictureBtn.setOnClickListener(new OnClickListener() {
 			@Override
@@ -264,96 +180,38 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		takePictureBtn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				takePictureInstantly=true;
 				openCamera();
 			}
 		});
 
-		speechInputBtn.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				activateSpeechInput();
-			}
-		});
+
 		wv = (WebView) findViewById(R.id.web_view);
 
 
-		/*ScrollView sv = new ScrollView(getApplicationContext());
+		initTTS();
 
-		// Layout
-		LinearLayout ll = new LinearLayout(getApplicationContext());
-		ll.setOrientation(LinearLayout.VERTICAL);
-		sv.addView(ll);
+        checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
 
-		// WebView to show SVG
-		wv = new WebView(getApplicationContext());
-		ll.addView(wv);
-
-		// Button 1
-		Button b1 = new Button(getApplicationContext());
-		b1.setText(R.string.take_a_picture_button_text);
-		b1.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				//checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
-				//checkPermission(Manifest.permission.CAMERA,MY_PERMISSIONS_CAMERA_REQUEST);
-				openCamera(false);
-			}
-		});
-		ll.addView(b1);
-
-		// Button 2
-		Button b2 = new Button(getApplicationContext());
-		b2.setText(R.string.pick_a_picture_button_text);
-		b2.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				pickPictureIntent();
-
-			}
-		});
-		ll.addView(b2);
-
-		// Button 3
-		Button b3 = new Button(getApplicationContext());
-		b3.setText(R.string.btn_take_a_picture_instantly);
-		b3.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				openCamera(true);
-			}
-		});
-		ll.addView(b3);
-
-		// Button help
-		Button help = new Button(getApplicationContext());
-		help.setText("Help");
-		help.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View view) {
-				tts.speak(getString(R.string.open_speech_instruction) +  getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
-			}
-		});
-		ll.addView(help);*/
+		//Shake listener instantiation
+		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+		mAccel = 0.00f;
+		mAccelCurrent = SensorManager.GRAVITY_EARTH;
+		mAccelLast = SensorManager.GRAVITY_EARTH;
 
 
-		// Displaying UI
-		//setContentView(sv);
-		handleIncomingIntents();
 
 
-		// ATTENTION: This was auto-generated to implement the App Indexing API.
-		// See https://g.co/AppIndexing/AndroidStudio for more information.
 		client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 	}
 
 
-	private void checkPermission(String permission, int requestCode) {
+    private void checkPermission(String permission, int requestCode) {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			if (ContextCompat.checkSelfPermission(getApplicationContext(),
 					permission)
 					!= PackageManager.PERMISSION_GRANTED) {
-				ActivityCompat.requestPermissions(FotoAppActivity.this, new String[]{permission},
+				ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission},
 						requestCode);
 
 			}
@@ -374,12 +232,12 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 						Log.e("TTS", "This Language is not supported");
 					}
 					tts.setOnUtteranceProgressListener(utteranceProgressListener);
-					tts.speak(getString(R.string.started_foto_app) + getString(R.string.open_speech_instruction) + getString(R.string.available_speech_commands) + getString(R.string.you_can_always_say_help), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
+					tts.speak(getString(R.string.started_foto_app), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
 
 					//audioHandler.startSpeechRecognition();
 
 				} else {
-					Log.e("TTS", "Initilization Failed!");
+					Log.e("TTS", "Initialization Failed!");
 				}
 			}
 		});
@@ -388,9 +246,6 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	public void onPause() {
 		super.onPause();
 		setIsVisible(false);
-		mSensorManager.unregisterListener(this);
-		speechHandler.destroySpeechRecognizer();
-		getContentResolver().unregisterContentObserver(mContentObserver);
 		//audioHandler.stopSpeechRecognition();
 		//tts.speak("Fotoapp wird geschlossen", TextToSpeech.QUEUE_FLUSH,null,utteranceId);
 
@@ -399,15 +254,14 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	public void onResume() {
 		super.onResume();
 		setIsVisible(true);
-		mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-		speechHandler = new SingleSpeechRecognitionHandler(getApplicationContext(), this);
-		getContentResolver().registerContentObserver(Settings.System.CONTENT_URI, true, mContentObserver);
 		//audioHandler.startSpeechRecognition();
 
 	}
 
 	public void onStart() {
 		super.onStart();// ATTENTION: This was auto-generated to implement the App Indexing API.
+        handleIncomingIntents();
+
 // See https://g.co/AppIndexing/AndroidStudio for more information.
 		client.connect();
 
@@ -418,8 +272,10 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 	public void onDestroy() {
 		super.onDestroy();
-		getApplicationContext().getContentResolver().unregisterContentObserver(mContentObserver);
 		stopTextToSpeech();
+        if (printerConnector !=null){
+            printerConnector.stopConnection();
+        }
 	}
 
 	public void stopTextToSpeech() {
@@ -431,7 +287,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 	private void pickPictureIntent() {
 		try {
-			tts.speak(getString(R.string.on_choose_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+			tts.speak(getString(R.string.on_choose_picture), TextToSpeech.QUEUE_FLUSH, null, ON_OPEN_ALBUM);
 			Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
 			getIntent.setType("image/*");
 
@@ -441,6 +297,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 			//Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
 			//chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
 
+            Thread.sleep(SLEEPTIME);
 			startActivityForResult(pickIntent, PICK_IMAGE_REQUEST);
 			//startActivityForResult(chooserIntent, PICK_IMAGE_REQUEST);
 		} catch (Exception e) {
@@ -449,7 +306,6 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	}
 
 	private void takePictureIntent() {
-		takePictureInstantly = true;
 		openCamera();
 	}
 
@@ -560,33 +416,33 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	@Override
 	public void onRequestPermissionsResult(int requestCode,
 										   String permissions[], int[] grantResults) {
-		switch (requestCode) {
-			case MY_PERMISSIONS_CAMERA_REQUEST: {
-				// If request is cancelled, the result arrays are empty.
-				if (grantResults.length > 0
-						&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					if (ContextCompat.checkSelfPermission(getApplicationContext(),
-							Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-						takePictureIntent();
-					} else {
-						checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
-					}
-				}
-				return;
-			}
-			case MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST: {
-				// If request is cancelled, the result arrays are empty.
-				if (grantResults.length > 0
-						&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					if (ContextCompat.checkSelfPermission(getApplicationContext(),
-							Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-						takePictureIntent();
-					} else {
-						checkPermission(Manifest.permission.CAMERA, MY_PERMISSIONS_CAMERA_REQUEST);
-					}
-				}
-				return;
-			}
+        switch (requestCode) {
+            case MY_PERMISSIONS_CAMERA_REQUEST: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                        takePictureIntent();
+                    } else {
+                        checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
+                    }
+                }
+                return;
+            }
+            case MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                            Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        takePictureIntent();
+                    } else {
+                        checkPermission(Manifest.permission.CAMERA, MY_PERMISSIONS_CAMERA_REQUEST);
+                    }
+                }
+                return;
+            }
             case MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION: {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -598,8 +454,8 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
                 }
                 return;
             }
-		}
-	}
+        }
+    }
 
 
 	private void sendImageToLaserPlotter(String svgString) {
@@ -612,37 +468,40 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 				sendCommands(printerConnector, svgData);
 			}
 
-			@Override
-			public void connectionLost() {
-				tts.speak(getString(R.string.lost_connection), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+            @Override
+            public void connectionLost() {
+                tts.speak(getString(R.string.lost_connection), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
                 printerConnector = null;
-			}
+            }
 
-			@Override
-			public void connectionRefused() {
-				tts.speak(getString(R.string.could_not_connect), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+            @Override
+            public void connectionRefused() {
+                tts.speak(getString(R.string.could_not_connect), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
                 printerConnector = null;
-			}
+            }
 
 			@Override
 			public void newCharsAvailable(byte[] c, int byteCount) {
 
 			}
 		};
-        if (printerConnector == null){
+		if (printerConnector == null){
             printerConnector = new PrinterConnector(connectionMode, getString(R.string.bluetooth_device_name), "192.168.42.132", 8090,
                     getApplicationContext(), onConnectionCallBack);
         }
 		if (printerConnector.device == null || printerConnector.connection == null) {
 			tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_ADD, null, CONNECTING);
-			printerConnector.initializeConnection();
+			Log.d(TAG,"Device or connection = null");
+            printerConnector.initializeConnection();
 		} else {
 			if (!printerConnector.connection.isConnected()) {
-				tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-				printerConnector.initializeConnection();
+				tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, CONNECTING);
+                Log.d(TAG,"not connected");
+                printerConnector.initializeConnection();
 			} else {
 				tts.speak(getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-				sendCommands(printerConnector, svgString);
+                Log.d(TAG,"sending commands");
+                sendCommands(printerConnector, svgString);
 			}
 		}
 	}
@@ -650,7 +509,6 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 	protected void sendCommands(PrinterConnector printerConnector, String svgString) {
 		//parser = new SVGParser(svgString,true);
-		Log.d(TAG,"Sending commands");
 		parser = new SVGParser(svgString, new PointF(20, 20));
 		ArrayList<Instruction> instructions = new ArrayList<>();
 		parser.setInstructions(instructions);
@@ -663,85 +521,13 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	}
 
 
-	@Override
-	public void onSpeechRecognized(String[] messages) {
-		parseSpeechInput(messages);
-	}
-
-	private void parseSpeechInput(String[] messages) {
-		Log.d("receiver", "Got message: " + messages);
-		for (String message : messages) {
-			switch (message) {
-				case "take picture":
-				case "Foto machen":
-				case "take a picture":
-				case "Foto schießen":
-				case "Foto aufnehmen":
-					//checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,MY_PERMISSIONS_EXTERNAL_STORAGE_REQUEST);
-					//checkPermission(Manifest.permission.CAMERA,MY_PERMISSIONS_CAMERA_REQUEST);
-					takePictureIntent();
-					return;
-				case "Open camera":
-				case "Öffne Camera":
-					takePictureInstantly=false;
-					openCamera();
-				case "choose picture":
-				case "pick picture":
-				case "Foto auswählen":
-				case "choose a picture":
-				case "pick a picture":
-					pickPictureIntent();
-					return;
-				case "set mode bluetooth":
-                case "mode bluetooth":
-                case "bluetooth mode":
-					setConnectionMode(PrinterConnector.Mode.BLUETOOTH);
-					tts.speak("Setting mode to bluetooth", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-					return;
-				case "set mode tcp":
-				case "set mode debug":
-				case "set mode debugging":
-					setConnectionMode(PrinterConnector.Mode.TCP);
-					tts.speak("Setting mode to debug", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-					return;
-				case "help":
-				case "options":
-				case "hilfe":
-				case "Optionen":
-					tts.speak(getString(R.string.available_speech_commands), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-					return;
-				default:
-					Log.d("receiver", "no action recognized");
-					break;
-
-			}
-		}
-		tts.speak("Das wurde nicht richtig verstanden. " + getString(R.string.available_speech_commands) , TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-
-
-		/*if (message.contains("Foto") || message.contains("picture")){
-			tts.speak("Das wurde nicht richtig verstanden", TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-		}*/
-	}
-
-
-
-	private void openCameraIntent(){
-		Intent cameraIntent = new Intent(this,CameraActivity.class);
-		cameraIntent.putExtra(Constants.TAKE_PICTURE_INSTANTLY, takePictureInstantly);
-		startActivityForResult(cameraIntent, CAMERA_REQUEST);
-	}
-
 
 	private void openCamera() {
 		// Starting an Intent to take a picture
-		if (takePictureInstantly==true){
+		tts.speak(getString(R.string.taking_picture_please_wait_a_bit), TextToSpeech.QUEUE_FLUSH, null, getString(R.string.taking_picture_please_wait_a_bit));
 
-			tts.speak(getString(R.string.taking_picture_please_wait_a_bit), TextToSpeech.QUEUE_FLUSH, null, getString(R.string.taking_picture_please_wait_a_bit));
-		} else {
+		//startActivity(cameraIntent);
 
-			tts.speak(getString(R.string.on_open_camera), TextToSpeech.QUEUE_FLUSH, null, getString(R.string.on_open_camera));
-		}
 	}
 
 
@@ -780,13 +566,17 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		mAccelCurrent = (float) Math.sqrt((double) (x*x + y*y + z*z));
 		float delta = mAccelCurrent - mAccelLast;
 		mAccel = mAccel * 0.9f + delta; // perform low-cut filter
-		Log.d("Shaking", "shaked " + mAccel);
+		//Log.d("Shaking", "shaked " + mAccel);
 		if (mAccel > 12 && System.currentTimeMillis() - timeOfLastShakeEvent >5000) {
 			//Toast toast = Toast.makeText(getApplicationContext(), "Gerät wurde geschaket.", Toast.LENGTH_LONG);
 			//toast.show();
 			timeOfLastShakeEvent = System.currentTimeMillis();
-				activateSpeechInput();
-			}
+			//giveHelp();
+		}
+	}
+
+	private void giveHelp() {
+		tts.speak(getString(R.string.available_speech_commands), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 	}
 
 	@Override

@@ -13,9 +13,9 @@
     <string name="picked_picture">Foto ausgewählt</string>
     <string name="took_picture">Foto aufgenommen</string>
     <string name="take_a_picture_button_text">Kamera öffnen</string>
-    <string name="pick_a_picture_button_text">Foto auswählen</string>
+    <string name="pick_a_picture_button_text">Foto aus Galerie auswählen</string>
     <string name="open_speech_instruction" >\"Wenn du dein Gerät schüttelst, aktivierst du die Spracheingabe. Du kannst die Spracheingabe auch aktivieren, indem du die Lautstärketasten an der Seite deines Smartphones doppelt drückst.\"</string>
-    <string name="btn_take_a_picture_instantly">Foto aufnehmen</string>
+    <string name="btn_take_a_picture_instantly">Sofort ein Foto aufnehmen</string>
     <string name="taking_picture_please_wait_a_bit">Nehme Foto auf. Bitte habe einen Moment Geduld und halte die Kamera still.</string>
     <string name="help">Hilfe</string>
     <string name="connection_established">Verbindung wurde hergestellt.</string>

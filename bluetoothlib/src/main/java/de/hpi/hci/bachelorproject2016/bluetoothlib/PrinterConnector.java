@@ -1,11 +1,13 @@
 package de.hpi.hci.bachelorproject2016.bluetoothlib;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import static android.content.ContentValues.TAG;
@@ -46,18 +48,18 @@ public class PrinterConnector  {
         context.registerReceiver(deviceReceiver,filter);
     }
 
-    public BroadcastReceiver deviceReceiver = new BroadcastReceiver() {
+    BroadcastReceiver deviceReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(BluetoothDevice.ACTION_FOUND)) {
                 BluetoothDevice d = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-                Log.d(TAG,"Bluetooth device found " + d.getName());
+                Log.d("Bluetooth","Bluetooth device found " + d.getName());
                 if (d.getName()!=null){
                     if (d.getName().contains(deviceName)) {
                         adapter.cancelDiscovery();
                         device = d;
-                        Log.d(TAG, "found device");
+                        Log.d(TAG, "found device with MAC " + d.getAddress());
                         initializeBluetoothConnection();
                     }
 
@@ -80,7 +82,8 @@ public class PrinterConnector  {
             connection = new TcpPrinterConnection(ip, port);
             connection.setOnConnectionCallBack(onConnectionCallBack);
             if(connection!=null)connection.connect();
-        } else if (mode == Mode.BLUETOOTH){
+        } else if (mode == Mode.BLUETOOTH) {
+
             adapter.cancelDiscovery();
             adapter.startDiscovery();
         }
@@ -93,6 +96,14 @@ public class PrinterConnector  {
 
     }
 
+    public void stopConnection(){
+        if (connection!= null) {
+            connection.tearDown();
+        }
+        adapter.cancelDiscovery();
+        context.unregisterReceiver(deviceReceiver);
+
+    }
 
 
 }
