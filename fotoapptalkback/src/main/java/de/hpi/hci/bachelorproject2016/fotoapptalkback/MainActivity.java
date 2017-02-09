@@ -2,16 +2,10 @@ package de.hpi.hci.bachelorproject2016.fotoapptalkback;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.PointF;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,7 +18,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.webkit.WebView;
 import android.widget.Button;
 
 import com.google.android.gms.appindexing.Action;
@@ -33,15 +26,11 @@ import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Locale;
-import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnection;
+
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnector;
-import de.hpi.hci.bachelorproject2016.fotoapptalkback.ImageProcessing.ImageTracerAndroid;
 import de.hpi.hci.bachelorproject2016.fotoapptalkback.ImageProcessing.ImageTransformator;
 import de.hpi.hci.bachelorproject2016.speechlib.SingleSpeechRecognitionHandler;
-import de.hpi.hci.bachelorproject2016.svgparser.Instruction;
-import de.hpi.hci.bachelorproject2016.svgparser.SVGParser;
 
 import static android.content.ContentValues.TAG;
 
@@ -59,7 +48,6 @@ public class MainActivity extends Activity { //implements SensorEventListener
     public static final int SLEEPTIME = 4000;
 
 
-
     public static boolean isVisible() {
 		return isVisible;
 	}
@@ -69,6 +57,8 @@ public class MainActivity extends Activity { //implements SensorEventListener
 	}
 
 	protected static boolean isVisible = false;
+
+    private boolean inPrintPreviewMode = false;
 
 
 	//Shake event handling
@@ -133,10 +123,9 @@ public class MainActivity extends Activity { //implements SensorEventListener
 		@Override
 		public void onStop(String s, boolean interrupted){
 			if (isVisible()) {
-				/*if (s.equals(FIRST_INSTRUCTIONS)) {
+				if (s.equals(FIRST_INSTRUCTIONS)) {
                     tts.speak(getString(R.string.started_foto_app), TextToSpeech.QUEUE_ADD, null, utteranceId);
-                } else*/
-                if (s.equals(CONNECTING)) {
+                } else if (s.equals(CONNECTING)) {
                     tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_ADD, null, CONNECTING);
                 } else if (s.equals(ON_OPEN_CAMERA)){
 					tts.speak(getString(R.string.on_open_camera), TextToSpeech.QUEUE_FLUSH, null, ON_OPEN_CAMERA);
@@ -227,8 +216,9 @@ public class MainActivity extends Activity { //implements SensorEventListener
 							|| result == TextToSpeech.LANG_NOT_SUPPORTED) {
 						Log.e("TTS", "This Language is not supported");
 					}
-					tts.setOnUtteranceProgressListener(utteranceProgressListener);
 					tts.speak(getString(R.string.started_foto_app), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
+
+					tts.setOnUtteranceProgressListener(utteranceProgressListener);
 
 				} else {
 					Log.e("TTS", "Initialization Failed!");
@@ -240,6 +230,7 @@ public class MainActivity extends Activity { //implements SensorEventListener
 	public void onPause() {
 		super.onPause();
 		setIsVisible(false);
+
 		//audioHandler.stopSpeechRecognition();
 		//tts.speak("Fotoapp wird geschlossen", TextToSpeech.QUEUE_FLUSH,null,utteranceId);
 
@@ -250,11 +241,17 @@ public class MainActivity extends Activity { //implements SensorEventListener
 		setIsVisible(true);
 		//audioHandler.startSpeechRecognition();
 
+        if (tts!=null && !inPrintPreviewMode){
+            tts.speak(getString(R.string.started_foto_app), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
+        } else if (inPrintPreviewMode){
+            inPrintPreviewMode = false;
+        }
 	}
 
 	public void onStart() {
 		super.onStart();// ATTENTION: This was auto-generated to implement the App Indexing API.
         handleIncomingIntents();
+
 
 // See https://g.co/AppIndexing/AndroidStudio for more information.
 		client.connect();
@@ -335,8 +332,8 @@ public class MainActivity extends Activity { //implements SensorEventListener
 				Bitmap compressedPicture = ImageTransformator.compressImage(picture);
 				compressedPicture = ImageTransformator.applyFilters(compressedPicture);
 
+                tts.speak(getString(R.string.picked_picture),TextToSpeech.QUEUE_FLUSH,null,utteranceId);
                 startPrintPreview(compressedPicture);
-
                 //svgString = ImageTracerAndroid.imageToSVG(compressedPicture, null, null);
 
                 //wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
@@ -351,9 +348,9 @@ public class MainActivity extends Activity { //implements SensorEventListener
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if ((requestCode == CAMERA_REQUEST) && (resultCode == Activity.RESULT_OK)) {
-			tts.speak(getString(R.string.took_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-			Bitmap picture = null;
-			if (data.getData() != null){
+            tts.speak(getString(R.string.took_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+            Bitmap picture = null;
+            if (data.getData() != null){
 				Log.d("FotoAppActivity", "resolving uri");
 				Uri uri = data.getData();
 				BitmapFactory.Options options = new BitmapFactory.Options();
@@ -382,13 +379,13 @@ public class MainActivity extends Activity { //implements SensorEventListener
 				Bitmap picture = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
 				Bitmap compressedPicture = ImageTransformator.compressImage(picture);
 				compressedPicture = ImageTransformator.applyFilters(compressedPicture);
+                tts.speak(getString(R.string.picked_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 
                 startPrintPreview(compressedPicture);
 				/*svgString = ImageTracerAndroid.imageToSVG(compressedPicture, null, null);
 
 				wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");*/
-				tts.speak(getString(R.string.picked_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-				//sendImageToLaserPlotter(svgString);
+                //sendImageToLaserPlotter(svgString);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -396,6 +393,7 @@ public class MainActivity extends Activity { //implements SensorEventListener
 	}
 
     private void startPrintPreview(Bitmap picture) {
+        inPrintPreviewMode = true;
         Intent printPreviewIntent = new Intent(this,PrintPreviewActivity.class);
         printPreviewIntent.putExtra("IMAGE",picture);
         startActivity(printPreviewIntent);

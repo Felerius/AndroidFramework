@@ -20,4 +20,7 @@
     <string name="help">help</string>
     <string name="btn_speech_input">Speech input</string>
     <string name="connection_established">"Connection established. "</string>
+    <string name="print_picture">Print picture</string>
+    <string name="go_back">go back</string>
+    <string name="printing_duration">\" Printing it would take roughly 7 minutes. Do you want to print now?\"</string>
 </resources>

@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
@@ -33,6 +34,9 @@ public class PrintPreviewActivity extends Activity {
     private WebView wv;
     private TextToSpeech tts;
 
+
+    private static final String TOOK_PHOTO = "tookPhoto";
+
     PrinterConnector printerConnector;
     SVGParser parser;
 
@@ -42,6 +46,33 @@ public class PrintPreviewActivity extends Activity {
     String svgString ="";
     String mimeType = "text/html";
     String encoding = "utf-8";
+
+    UtteranceProgressListener utteranceProgressListener = new UtteranceProgressListener() {
+        @Override
+        public void onStart(String s) {
+
+        }
+
+        @Override
+        public void onDone(String s) {
+            if (s.equals(TOOK_PHOTO) || s.equals(getString(R.string.picked_picture))){
+                wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
+            }
+        }
+
+        @Override
+        public void onError(String s) {
+
+        }
+
+        @Override
+        public void onStop(String s, boolean interrupted){
+            if (s.equals(TOOK_PHOTO)){
+                tts.speak(getString(R.string.printing_duration), TextToSpeech.QUEUE_FLUSH, null, s);
+            }
+        }
+    };
+
 
 
     String utteranceId = this.hashCode() + "";
@@ -72,7 +103,9 @@ public class PrintPreviewActivity extends Activity {
 
         try {
             svgString = ImageTracerAndroid.imageToSVG(picture, null, null);
-            int maxLogSize = 1000;
+            wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
+
+            //int maxLogSize = 1000;
             /*for (int i = 0; i <= svgString.length() / maxLogSize; i++) {
                 int start = i * maxLogSize;
                 int end = (i + 1) * maxLogSize;
@@ -80,7 +113,7 @@ public class PrintPreviewActivity extends Activity {
                 Log.v(TAG, svgString.substring(start, end));
             }*/
 
-            wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
+            //wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
             //sendImageToLaserPlotter(svgString);
         } catch (Exception e) {
             Log.e(" Error tracing photo ", e.toString());
@@ -99,7 +132,8 @@ public class PrintPreviewActivity extends Activity {
                             || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                         Log.e("TTS", "This Language is not supported");
                     }
-
+                    tts.setOnUtteranceProgressListener(utteranceProgressListener);
+                    tts.speak(getString(R.string.printing_duration), TextToSpeech.QUEUE_FLUSH, null, TOOK_PHOTO);
                 } else {
                     Log.e("TTS", "Initialization Failed!");
                 }
