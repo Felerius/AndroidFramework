@@ -20,4 +20,6 @@
     <string name="help">help</string>
     <string name="connection_established">Connection established.</string>
     <string name="camera_preview_double_tap_to_take_a_picture">Camera preview. Double tap to take a picture</string>
+    <string name="print_picture">Print picture</string>
+    <string name="go_back">Go back</string>
 </resources>

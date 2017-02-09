@@ -45,7 +45,7 @@ import de.hpi.hci.bachelorproject2016.svgparser.SVGParser;
 
 import static android.content.ContentValues.TAG;
 
-public class MainActivity extends Activity implements SensorEventListener {
+public class MainActivity extends Activity { //implements SensorEventListener
 
     private static final int PICK_IMAGE_REQUEST = 2;
 	private static final int CAMERA_REQUEST = 1;
@@ -72,22 +72,21 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 
 	//Shake event handling
-	private SensorManager mSensorManager;
+	/*private SensorManager mSensorManager;
 	private float mAccel; // acceleration apart from gravity
 	private float mAccelCurrent; // current acceleration including gravity
 	private float mAccelLast; // last acceleration including gravity
 	private long timeOfLastShakeEvent = System.currentTimeMillis();
-
+*/
 
 	//UI
 	Button takePictureBtn;
 	Button pickPictureBtn;
-	WebView wv;
 
 	//SVG parsing
-	SVGParser parser;
-	String svgString = "";
-	PrinterConnector printerConnector;
+	//SVGParser parser;
+//	String svgString = "";
+	//PrinterConnector printerConnector;
 	/**
 	 * ATTENTION: This was auto-generated to implement the App Indexing API.
 	 * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -156,11 +155,9 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 	String mimeType = "text/html";
 	String encoding = "utf-8";
-	String dir;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_foto_app);
 
@@ -185,7 +182,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 		});
 
 
-		wv = (WebView) findViewById(R.id.web_view);
 
 
 		initTTS();
@@ -193,11 +189,11 @@ public class MainActivity extends Activity implements SensorEventListener {
         checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
 
 		//Shake listener instantiation
-		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
-		mAccel = 0.00f;
+		//mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		//mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+		/*mAccel = 0.00f;
 		mAccelCurrent = SensorManager.GRAVITY_EARTH;
-		mAccelLast = SensorManager.GRAVITY_EARTH;
+		mAccelLast = SensorManager.GRAVITY_EARTH;*/
 
 
 
@@ -233,8 +229,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 					}
 					tts.setOnUtteranceProgressListener(utteranceProgressListener);
 					tts.speak(getString(R.string.started_foto_app), TextToSpeech.QUEUE_ADD, null, FIRST_INSTRUCTIONS);
-
-					//audioHandler.startSpeechRecognition();
 
 				} else {
 					Log.e("TTS", "Initialization Failed!");
@@ -273,9 +267,9 @@ public class MainActivity extends Activity implements SensorEventListener {
 	public void onDestroy() {
 		super.onDestroy();
 		stopTextToSpeech();
-        if (printerConnector !=null){
+/*        if (printerConnector !=null){
             printerConnector.stopConnection();
-        }
+        }*/
 	}
 
 	public void stopTextToSpeech() {
@@ -340,8 +334,12 @@ public class MainActivity extends Activity implements SensorEventListener {
 				Bitmap picture = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
 				Bitmap compressedPicture = ImageTransformator.compressImage(picture);
 				compressedPicture = ImageTransformator.applyFilters(compressedPicture);
-				svgString = ImageTracerAndroid.imageToSVG(compressedPicture, null, null);
-				wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
+
+                startPrintPreview(compressedPicture);
+
+                //svgString = ImageTracerAndroid.imageToSVG(compressedPicture, null, null);
+
+                //wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
 			} catch (Exception e) {
 				Log.e(" Error tracing photo ", e.toString());
 			}
@@ -375,23 +373,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 			Log.d("Camera request", picture.toString());
 
 			picture = ImageTransformator.applyFilters(picture);
-
-
-			try {
-				svgString = ImageTracerAndroid.imageToSVG(picture, null, null);
-				int maxLogSize = 1000;
-				for (int i = 0; i <= svgString.length() / maxLogSize; i++) {
-					int start = i * maxLogSize;
-					int end = (i + 1) * maxLogSize;
-					end = end > svgString.length() ? svgString.length() : end;
-					Log.v(TAG, svgString.substring(start, end));
-				}
-
-				wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
-				sendImageToLaserPlotter(svgString);
-			} catch (Exception e) {
-				Log.e(" Error tracing photo ", e.toString());
-			}
+            startPrintPreview(picture);
 		} else if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
 
 			Uri uri = data.getData();
@@ -401,19 +383,27 @@ public class MainActivity extends Activity implements SensorEventListener {
 				Bitmap compressedPicture = ImageTransformator.compressImage(picture);
 				compressedPicture = ImageTransformator.applyFilters(compressedPicture);
 
-				svgString = ImageTracerAndroid.imageToSVG(compressedPicture, null, null);
+                startPrintPreview(compressedPicture);
+				/*svgString = ImageTracerAndroid.imageToSVG(compressedPicture, null, null);
 
-				wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");
+				wv.loadDataWithBaseURL("", svgString, mimeType, encoding, "");*/
 				tts.speak(getString(R.string.picked_picture), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-				sendImageToLaserPlotter(svgString);
+				//sendImageToLaserPlotter(svgString);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
+    private void startPrintPreview(Bitmap picture) {
+        Intent printPreviewIntent = new Intent(this,PrintPreviewActivity.class);
+        printPreviewIntent.putExtra("IMAGE",picture);
+        startActivity(printPreviewIntent);
 
-	@Override
+    }
+
+
+    @Override
 	public void onRequestPermissionsResult(int requestCode,
 										   String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -458,68 +448,6 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
 
-	private void sendImageToLaserPlotter(String svgString) {
-		final String svgData = svgString;
-		PrinterConnection.OnConnectionCallBack onConnectionCallBack = new PrinterConnection.OnConnectionCallBack() {
-			@Override
-			public void connectionEstablished() {
-				Log.d(TAG, "connectionEstablished: ");
-				tts.speak(getString(R.string.connection_established) + getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_ADD, null, utteranceId);
-				sendCommands(printerConnector, svgData);
-			}
-
-            @Override
-            public void connectionLost() {
-                tts.speak(getString(R.string.lost_connection), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-                printerConnector = null;
-            }
-
-            @Override
-            public void connectionRefused() {
-                tts.speak(getString(R.string.could_not_connect), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-                printerConnector = null;
-            }
-
-			@Override
-			public void newCharsAvailable(byte[] c, int byteCount) {
-
-			}
-		};
-		if (printerConnector == null){
-            printerConnector = new PrinterConnector(connectionMode, getString(R.string.bluetooth_device_name), "192.168.42.132", 8090,
-                    getApplicationContext(), onConnectionCallBack);
-        }
-		if (printerConnector.device == null || printerConnector.connection == null) {
-			tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_ADD, null, CONNECTING);
-			Log.d(TAG,"Device or connection = null");
-            printerConnector.initializeConnection();
-		} else {
-			if (!printerConnector.connection.isConnected()) {
-				tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, CONNECTING);
-                Log.d(TAG,"not connected");
-                printerConnector.initializeConnection();
-			} else {
-				tts.speak(getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-                Log.d(TAG,"sending commands");
-                sendCommands(printerConnector, svgString);
-			}
-		}
-	}
-
-
-	protected void sendCommands(PrinterConnector printerConnector, String svgString) {
-		//parser = new SVGParser(svgString,true);
-		parser = new SVGParser(svgString, new PointF(20, 20));
-		ArrayList<Instruction> instructions = new ArrayList<>();
-		parser.setInstructions(instructions);
-		parser.startParsing();
-
-		for (Instruction instruction : instructions) {
-			Log.d("Connection", "sending instruction " + instruction.buildInstruction(Instruction.Mode.GPGL));
-			printerConnector.connection.write(instruction.buildInstruction(Instruction.Mode.GPGL));
-		}
-	}
-
 
 
 	private void openCamera() {
@@ -556,7 +484,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 		AppIndex.AppIndexApi.end(client, getIndexApiAction());
 		client.disconnect();
 	}
-
+/*
 	@Override
 	public void onSensorChanged(SensorEvent se) {
 		float x = se.values[0];
@@ -574,13 +502,13 @@ public class MainActivity extends Activity implements SensorEventListener {
 			//giveHelp();
 		}
 	}
-
-	private void giveHelp() {
-		tts.speak(getString(R.string.available_speech_commands), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
-	}
-
 	@Override
 	public void onAccuracyChanged(Sensor sensor, int i) {
 
 	}
+*/
+	private void giveHelp() {
+		tts.speak(getString(R.string.available_speech_commands), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+	}
+
 }

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/activity_print_preview"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="de.hpi.hci.bachelorproject2016.fotoapptalkback.PrintPreviewActivity">
+
+
+    <Button
+        android:text="@string/print_picture"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:id="@+id/btn_print_picture"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:text="@string/go_back"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:id="@+id/btn_go_back"
+        android:layout_below="@+id/btn_print_picture"
+        android:layout_alignParentStart="true" />
+
+    <WebView android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/web_view"
+        android:layout_below="@+id/btn_go_back"
+        android:layout_alignParentStart="true" />
+
+</RelativeLayout>

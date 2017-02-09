@@ -5,13 +5,12 @@
     <string name="sending_img_laser_plotter">Sende Bild an den Laser plotter</string>
     <string name="lost_connection">Die Verbindung zum Laser plotter wurde getrennt</string>
     <string name="could_not_connect">Verbindung mit dem Laser plotter konnte nicht hergestellt werden. Bitte überprüfe, ob er eingeschaltet ist?</string>
-    <string name="started_foto_app">Willkommen bei FotoApp. Mit dieser App kannst du Bilder aufnehmen und auswählen, die dann direkt an deinen Laser plotter gesendet werden und dann gedruckt werden.</string>
+    <string name="started_foto_app">Fotoapp. Mit dieser App kannst du zu druckende Bilder auswählen.</string>
     <string name="available_speech_commands">Verfügbare Sprach-Kommandos sind \'Kamera öffnen, \'Foto aufnehmen\' und \'Foto auswählen\'.</string>
     <string name="on_open_camera">\"Öffne Kamera. Tippe den Bildschirm doppelt an, um ein Foto aufzunehmen\"</string>
     <string name="on_choose_picture">Öffne das Album. Suche ein Bild aus, das gedruckt werden soll.</string>
     <string name="you_can_always_say_help">Außerdem kannst du jederzeit \'Hilfe\' sagen, um die aktuellen Optionen zu hören.</string>
     <string name="picked_picture">Foto ausgewählt</string>
-    <string name="took_picture">Foto aufgenommen</string>
     <string name="take_a_picture_button_text">Kamera öffnen</string>
     <string name="pick_a_picture_button_text">Foto aus Galerie auswählen</string>
     <string name="open_speech_instruction" >\"Wenn du dein Gerät schüttelst, aktivierst du die Spracheingabe. Du kannst die Spracheingabe auch aktivieren, indem du die Lautstärketasten an der Seite deines Smartphones doppelt drückst.\"</string>
@@ -20,4 +19,7 @@
     <string name="help">Hilfe</string>
     <string name="connection_established">Verbindung wurde hergestellt.</string>
     <string name="camera_preview_double_tap_to_take_a_picture">Kamera Vorschau. Doppelt antippen, um ein Foto aufzunehmen.</string>
+    <string name="took_picture">Das Foto wurde in der Galerie gespeichert. Es zu drucken würde circa 7 Minuten dauern. Willst du es jetzt drucken?</string>
+    <string name="print_picture">Foto ausdrucken</string>
+    <string name="go_back">Zurück</string>
 </resources>
