@@ -1,10 +1,10 @@
 <resources>
     <string name="app_name">FotoAppTalkback</string>
     <string name="bluetooth_device_name">raspberrypi</string>
-    <string name="connecting_laser_plotter">Verbinde mit Laser plotter, um das Bild zu drucken. Dies kann einen Moment dauern.</string>
+    <string name="connecting_laser_plotter">Verbinde mit Laser plotter, um das Bild zu drucken. Dies kann einen Moment dauern. Bitte schließe die App nicht, bis die Verbindung zum Drucker hergestellt wurde.</string>
     <string name="sending_img_laser_plotter">Sende Bild an den Laser plotter</string>
     <string name="lost_connection">Die Verbindung zum Laser plotter wurde getrennt</string>
-    <string name="could_not_connect">Verbindung mit dem Laser plotter konnte nicht hergestellt werden. Bitte überprüfe, ob er eingeschaltet ist?</string>
+    <string name="could_not_connect">Verbindung mit dem Laser plotter konnte nicht hergestellt werden. Bitte überprüfe, ob er eingeschaltet ist.</string>
     <string name="started_foto_app">Wähle das zu druckende Bild aus.</string>
     <string name="available_speech_commands">Verfügbare Sprach-Kommandos sind \'Kamera öffnen, \'Foto aufnehmen\' und \'Foto auswählen\'.</string>
     <string name="on_open_camera">\"Öffne Kamera. Tippe den Bildschirm doppelt an, um ein Foto aufzunehmen\"</string>
