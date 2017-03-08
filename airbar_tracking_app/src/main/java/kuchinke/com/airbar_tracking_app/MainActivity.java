@@ -16,14 +16,22 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import kuchinke.com.airbar_tracking_app.annotations.Annotation;
+import kuchinke.com.airbar_tracking_app.annotations.CircleAnnotation;
+import kuchinke.com.airbar_tracking_app.annotations.RectangleAnnotation;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -155,8 +163,8 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
     }
+
 
     @Override
     protected void onDestroy() {
