@@ -6,6 +6,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -40,15 +42,29 @@ public class MainActivity extends AppCompatActivity {
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
+        webSettings.setAllowFileAccessFromFileURLs(true);
+        webSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         //http://stackoverflow.com/questions/9414312/android-webview-javascript-from-assets
         //String html = "file:///android_asset/d3test.html";
-        String html = "file:///android_asset/TactileCalendar/calendar.html"; //parse the content of this url
+        //String html = "http://localhost:8000/TactileCalendar/calendar.html"; //parse the content of this url
         //String html = "calendar.html"; //parse the content of this url
-        webView.loadDataWithBaseURL("file:///android_asset/TactileCalendar", html, "text/html", "utf-8", ""); //if no WebServer needed and file server is enough
-        webView.setWebViewClient(new MyWebViewClient());
+        //webView.loadDataWithBaseURL("http://localhost:8000/TactileCalendar", html, "text/html", "utf-8", ""); //if no WebServer needed and file server is enough
+        webView.setWebViewClient(new WebViewClient());
+        webView.setWebContentsDebuggingEnabled(true);
+
+        webView.setWebChromeClient(new WebChromeClient(){
+
+            public void onCloseWindow(WebView w){
+                super.onCloseWindow(w);
+                Log.d("WebChromeClient", "Window close");
+                w.destroy();
+            }
+        });
+
+        webView.getSettings().setDomStorageEnabled(true);
         try {
-            webView.loadUrl("http://127.0.0.1:8000/TactileCalendar/calendar.html");
-            Log.i("Main", "loaded url");
+            webView.loadUrl("http://localhost:8000/TactileCalendar/test.html");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -73,8 +89,8 @@ public class MainActivity extends AppCompatActivity {
     class MyWebViewClient extends WebViewClient {
         // For KitKat and earlier.
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            if (Uri.parse(url).getHost().equals("http://apis.google.com/js/api.js")) {
-                // This is my web site, so do not override; let my WebView load the page
+            if (!Uri.parse(url).getHost().contains("google.com")) {
+
                 return false;
             }
             // Otherwise, the link is not for a page on my site, so launch another Activity that handles URLs
