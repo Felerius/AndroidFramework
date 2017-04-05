@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    android:id="@+id/coordinatorlayout">
+
+
+
+    <include
+        layout="@layout/content_device_communication"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"/>
+    <!--
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:layout_marginLeft="16dp"
+        android:clickable="true"
+        app:fabSize="mini"
+        app:srcCompat="@android:drawable/ic_media_play"
+        android:id="@+id/fab_play_pause"
+        android:layout_gravity="bottom|left"/>
+    <android.support.design.widget.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="66dp"
+        android:layout_marginBottom="16dp"
+
+        android:clickable="true"
+        app:fabSize="mini"
+        app:srcCompat="@mipmap/stop"
+        android:id="@+id/fab_stop"
+        android:layout_gravity="bottom|left"/>
+        /!-->
+
+
+
+
+
+
+
+
+</android.support.design.widget.CoordinatorLayout>
