@@ -3,6 +3,7 @@ package com.hci.bachelorproject.androidjsinteraction;
 import android.content.Context;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
 import android.widget.Toast;
 
 import com.google.api.services.calendar.model.Event;
@@ -19,23 +20,21 @@ import java.util.List;
 
 public class WebAppInterface {
     Context mContext;
-
+    SVGTransmitter svgTransmitter;
 
     public void setGoogleCalendarEvents(List<Event> googleCalendarEvents) {
         this.googleCalendarEvents = googleCalendarEvents;
     }
 
     List<Event>  googleCalendarEvents;
+    WebView webView;
     /** Instantiate the interface and set the context */
-    WebAppInterface(Context c) {
+    WebAppInterface(Context c, WebView webView) {
         mContext = c;
+        svgTransmitter = new SVGTransmitter(c, webView);
+        this.webView = webView;
     }
 
-    /** Show a toast from the web page */
-    @JavascriptInterface
-    public void showToast(String toast) {
-        Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show();
-    }
 
     @JavascriptInterface
     public void printSVG(String svg) {
@@ -47,19 +46,9 @@ public class WebAppInterface {
         JSONObject obj = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         for (Event event: googleCalendarEvents){
-            JSONObject jsonEvent = new JSONObject();
-            /*try {
-                jsonEvent.put("summary", event.getSummary());
-                jsonEvent.put("id",event.getId());
-                jsonEvent.put("startTime", event.getStart());
-                jsonEvent.put("endTime", event.getEnd());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }*/
-            Log.i("Event",event.toString());
+
             jsonArray.put(event.toString());
         }
-        Log.i("Array", jsonArray.toString());
         try {
             obj.put("events",jsonArray);
         } catch (JSONException e) {
@@ -71,6 +60,13 @@ public class WebAppInterface {
     @JavascriptInterface
     public String getEventProperty(int id, String property) {
         return googleCalendarEvents.get(id).get(property).toString();
+    }
+
+    @JavascriptInterface
+    public void sendSVGToLaserPlotter(String svgString){
+        Log.i("WebAppInterface", "Sending to plotter " + svgString);
+        Toast.makeText(mContext, "Printing SVG", Toast.LENGTH_SHORT).show();
+        svgTransmitter.sendToLaserPlotter(svgString);
     }
 
 

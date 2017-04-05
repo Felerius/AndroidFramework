@@ -5,7 +5,7 @@ android {
     buildToolsVersion "25.0.2"
 
     defaultConfig {
-        applicationId "kuchinke.com.airbar_tracking_app"
+        applicationId "com.hci.bachelorproject.airbar_tracking_app"
         minSdkVersion 21
         targetSdkVersion 25
         versionCode 1
@@ -31,4 +31,5 @@ dependencies {
     compile 'com.android.support:design:25.1.1'
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:recyclerview-v7:25.1.1'
+    compile project(":bluetoothlib")
 }

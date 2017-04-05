@@ -499,6 +499,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 	private void sendImageToLaserPlotter(String svgString) {
 		final String svgData = svgString;
 		PrinterConnection.OnConnectionCallBack onConnectionCallBack = new PrinterConnection.OnConnectionCallBack() {
+
 			@Override
 			public void connectionEstablished() {
 				Log.d(TAG, "connectionEstablished: ");
@@ -527,11 +528,11 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
             printerConnector = new PrinterConnector(connectionMode, getString(R.string.bluetooth_device_name), "192.168.42.132", 8090,
                     getApplicationContext(), onConnectionCallBack);
         }
-		if (printerConnector.device == null || printerConnector.connection == null) {
+		if (printerConnector.device == null || printerConnector.getConnection() == null) {
 			tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_ADD, null, CONNECTING);
 			printerConnector.initializeConnection();
 		} else {
-			if (!printerConnector.connection.isConnected()) {
+			if (!printerConnector.getConnection().isConnected()) {
 				tts.speak(getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
 				printerConnector.initializeConnection();
 			} else {
@@ -552,7 +553,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 		for (Instruction instruction : instructions) {
 			Log.d("Connection", "sending instruction " + instruction.buildInstruction(Instruction.Mode.GPGL));
-			printerConnector.connection.write(instruction.buildInstruction(Instruction.Mode.GPGL));
+			printerConnector.getConnection().write(instruction.buildInstruction(Instruction.Mode.GPGL));
 		}
 	}
 

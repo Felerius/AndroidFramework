@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
@@ -18,7 +19,16 @@ public class PrinterConnector  {
 
 
     public BluetoothDevice device;
-    public PrinterConnection connection;
+
+    public PrinterConnection getConnection() {
+        return connection;
+    }
+
+    public void setConnection(PrinterConnection connection) {
+        this.connection = connection;
+    }
+
+    private PrinterConnection connection;
     private BluetoothAdapter adapter;
     protected boolean isConnected=false;
     private String deviceName;
@@ -26,7 +36,7 @@ public class PrinterConnector  {
     private String ip;
     private int port;
     private Context context;
-    private PrinterConnection.OnConnectionCallBack onConnectionCallBack;
+    PrinterConnection.OnConnectionCallBack onConnectionCallBack;
     public enum Mode{
         BLUETOOTH,
         TCP
@@ -104,6 +114,7 @@ public class PrinterConnector  {
         context.unregisterReceiver(deviceReceiver);
 
     }
+
 
 
 }

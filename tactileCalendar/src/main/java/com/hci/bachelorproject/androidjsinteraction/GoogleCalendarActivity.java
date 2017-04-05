@@ -52,6 +52,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnection;
+import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnector;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -108,12 +110,11 @@ public class GoogleCalendarActivity extends Activity
         mProgress.setMessage("Calling Google Calendar API ...");
 
         webView = new WebView(this);
-        webAppInterface = new WebAppInterface(this);
+        webAppInterface = new WebAppInterface(this,webView);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.addJavascriptInterface(webAppInterface, "Android");
         webView.setWebContentsDebuggingEnabled(true);
-        webView.setWebViewClient(new WebViewClient());
         activityLayout.addView(webView);
 
         setContentView(activityLayout);
@@ -122,6 +123,8 @@ public class GoogleCalendarActivity extends Activity
         mCredential = GoogleAccountCredential.usingOAuth2(
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff());
+
+
     }
 
 
@@ -418,6 +421,7 @@ public class GoogleCalendarActivity extends Activity
                 webView.loadDataWithBaseURL("file:///android_asset/TactileCalendar/", html, "text/html", "utf-8", ""); //if no WebServer needed and file server is enough
                 Log.i("CalendarAct","loaded");
                 webView.loadUrl("file:///android_asset/TactileCalendar/calendar.html");
+
 
             }
         }

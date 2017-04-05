@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
 
+import de.hpi.hci.bachelorproject2016.bluetoothlib.BluetoothConnection;
+import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnection;
 import kuchinke.com.airbar_tracking_app.annotations.Annotation;
 import kuchinke.com.airbar_tracking_app.annotations.CircleAnnotation;
 import kuchinke.com.airbar_tracking_app.annotations.RectangleAnnotation;
