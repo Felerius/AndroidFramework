@@ -44,6 +44,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,7 +58,7 @@ import pub.devrel.easypermissions.EasyPermissions;
 public class GoogleCalendarActivity extends Activity
         implements EasyPermissions.PermissionCallbacks {
     GoogleAccountCredential mCredential;
-    private TextView mOutputText;
+    //private TextView mOutputText;
     private Button mCallApiButton;
     ProgressDialog mProgress;
     WebView webView;
@@ -96,21 +97,12 @@ public class GoogleCalendarActivity extends Activity
             @Override
             public void onClick(View v) {
                 mCallApiButton.setEnabled(false);
-                mOutputText.setText("");
+                //mOutputText.setText("");
                 getResultsFromApi();
                 mCallApiButton.setEnabled(true);
             }
         });
         activityLayout.addView(mCallApiButton);
-
-        mOutputText = new TextView(this);
-        mOutputText.setLayoutParams(tlp);
-        mOutputText.setPadding(16, 16, 16, 16);
-        mOutputText.setVerticalScrollBarEnabled(true);
-        mOutputText.setMovementMethod(new ScrollingMovementMethod());
-        mOutputText.setText(
-                "Click the \'" + BUTTON_TEXT +"\' button to test the API.");
-        activityLayout.addView(mOutputText);
 
         mProgress = new ProgressDialog(this);
         mProgress.setMessage("Calling Google Calendar API ...");
@@ -147,7 +139,7 @@ public class GoogleCalendarActivity extends Activity
         } else if (mCredential.getSelectedAccountName() == null) {
             chooseAccount();
         } else if (! isDeviceOnline()) {
-            mOutputText.setText("No network connection available.");
+            Toast.makeText(this,"No network connection available.",Toast.LENGTH_SHORT);
         } else {
             new MakeRequestTask(mCredential).execute();
         }
@@ -205,9 +197,9 @@ public class GoogleCalendarActivity extends Activity
         switch(requestCode) {
             case REQUEST_GOOGLE_PLAY_SERVICES:
                 if (resultCode != RESULT_OK) {
-                    mOutputText.setText(
+                    Toast.makeText(this,
                             "This app requires Google Play Services. Please install " +
-                                    "Google Play Services on your device and relaunch this app.");
+                                    "Google Play Services on your device and relaunch this app.",Toast.LENGTH_LONG);
                 } else {
                     getResultsFromApi();
                 }
@@ -402,7 +394,6 @@ public class GoogleCalendarActivity extends Activity
 
         @Override
         protected void onPreExecute() {
-            mOutputText.setText("");
             mProgress.show();
         }
 
@@ -410,9 +401,8 @@ public class GoogleCalendarActivity extends Activity
         protected void onPostExecute(List<String> output) {
             mProgress.hide();
             if (output == null || output.size() == 0) {
-                mOutputText.setText("No results returned.");
+                Toast.makeText(getApplicationContext(),"No results returned.",Toast.LENGTH_SHORT);
             } else {
-                mOutputText.setText(TextUtils.join("\n", output));
                 String html = null;
                 try {
                     InputStream is = getAssets().open("TactileCalendar/calendar.html");
@@ -444,12 +434,9 @@ public class GoogleCalendarActivity extends Activity
                     startActivityForResult(
                             ((UserRecoverableAuthIOException) mLastError).getIntent(),
                             GoogleCalendarActivity.REQUEST_AUTHORIZATION);
-                } else {
-                    mOutputText.setText("The following error occurred:\n"
-                            + mLastError.getMessage());
                 }
             } else {
-                mOutputText.setText("Request cancelled.");
+                Toast.makeText(getApplicationContext(),"Request cancelled.",Toast.LENGTH_LONG);
             }
         }
     }

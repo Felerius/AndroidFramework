@@ -1,4 +1,3 @@
-
 function daysSinceEpoch(timeString) {
   var date = new Date(timeString)
   return Math.floor(date/8.64e7)
@@ -13,3 +12,10 @@ function minutesSinceMidnight(timeString) {
   return diff/60000
 }
 
+var cursorX;
+var cursorY;
+
+document.onmousemove = function(e) {
+  cursorX = e.pageX;
+  cursorY = e.pageY;
+}

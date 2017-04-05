@@ -15,7 +15,7 @@ function endOf(event) {
 }
 
 function fitsOnLevel(event, level, events) {
-  for(var i = 0; i < events.length; ++i) {
+  for(let i = 0; i < events.length; ++i) {
     if(isOverlapping(event, events[i]) && events[i].level == level) {
       return false
     }
@@ -29,7 +29,7 @@ function generateXLevels(events) {
     return (lengthOfEvent(b) - lengthOfEvent(a))
   })
 
-  for(var i = 0; i<events.length; i++) {
+  for(let i = 0; i<events.length; i++) {
     var curLevel = 0
     while(true) {
       if(fitsOnLevel(events[i], curLevel, events)) {
@@ -44,7 +44,7 @@ function generateXLevels(events) {
 function getMinHour(events) {
   var minHour = 23
 
-  for(var i = 0; i<events.length; i++) {
+  for(let i = 0; i<events.length; i++) {
     var startingHour = (new Date(events[i].start.dateTime)).getHours()
     if(startingHour < minHour) {
       minHour = startingHour
@@ -58,7 +58,7 @@ function getMinHour(events) {
 function getMaxHour(events) {
   var maxHour = 0
 
-  for(var i = 0; i<events.length; i++) {
+  for(let i = 0; i<events.length; i++) {
     var endingHour = (new Date(events[i].end.dateTime)).getHours() + 1
     if(endingHour > maxHour) {
       maxHour = endingHour
