@@ -1,0 +1,6 @@
+<<<<<<< HEAD
+include ':braillelib', ':speechlib', ':svgparser', ':fotoapp', ':bluetoothlib', ':fotoapptalkback', ':androidjsinteraction'
+=======
+include ':speechlib', ':svgparser', ':fotoapp', ':bluetoothlib', ':fotoapptalkback', ':airbar_tracking_app'
+//':braillelib'
+>>>>>>> master
