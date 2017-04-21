@@ -1,4 +1,4 @@
-package com.hci.bachelorproject.androidjsinteraction;
+package com.hci.bachelorproject.tactileCalendar;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -6,20 +6,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         webServer.start();
         webView = (WebView)findViewById(R.id.webView);
 
-        webView.addJavascriptInterface(new WebAppInterface(this), "Android");
+        webView.addJavascriptInterface(new WebAppInterface(MainActivity.this,webView), "Android");
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setAllowFileAccessFromFileURLs(true);

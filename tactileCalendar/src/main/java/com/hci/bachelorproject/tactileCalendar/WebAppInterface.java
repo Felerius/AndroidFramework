@@ -1,6 +1,12 @@
-package com.hci.bachelorproject.androidjsinteraction;
+package com.hci.bachelorproject.tactileCalendar;
 
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
@@ -13,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by Julius on 01.03.2017.
@@ -21,6 +28,7 @@ import java.util.List;
 public class WebAppInterface {
     Context mContext;
     SVGTransmitter svgTransmitter;
+    TextToSpeech tts;
 
     public void setGoogleCalendarEvents(List<Event> googleCalendarEvents) {
         this.googleCalendarEvents = googleCalendarEvents;
@@ -33,14 +41,16 @@ public class WebAppInterface {
         mContext = c;
         svgTransmitter = new SVGTransmitter(c, webView);
         this.webView = webView;
+        this.tts = new TextToSpeech(c, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int i) {
+
+            }
+        });
     }
 
 
-    @JavascriptInterface
-    public void printSVG(String svg) {
-        Toast.makeText(mContext, "Printing SVG", Toast.LENGTH_SHORT).show();
-    }
-
+    //google calendar method
     @JavascriptInterface
     public String getGoogleCalendarEvents() {
         JSONObject obj = new JSONObject();
@@ -57,17 +67,26 @@ public class WebAppInterface {
         return obj.toString();
     }
 
+    //google calendar method
     @JavascriptInterface
     public String getEventProperty(int id, String property) {
         return googleCalendarEvents.get(id).get(property).toString();
     }
 
+    //framework method
     @JavascriptInterface
     public void sendSVGToLaserPlotter(String svgString){
         Log.i("WebAppInterface", "Sending to plotter " + svgString);
         Toast.makeText(mContext, "Printing SVG", Toast.LENGTH_SHORT).show();
         svgTransmitter.sendToLaserPlotter(svgString);
     }
+
+    //framework method
+    @JavascriptInterface
+    public void speak(String text){
+        tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,text);
+    }
+
 
 
 }

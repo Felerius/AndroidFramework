@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.hci.bachelorproject.androidjsinteraction;
+package com.hci.bachelorproject.tactileCalendar;
  
 import android.content.res.AssetManager;
 import android.text.TextUtils;

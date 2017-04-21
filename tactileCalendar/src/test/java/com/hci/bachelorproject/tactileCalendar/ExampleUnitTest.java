@@ -1,4 +1,4 @@
-package com.hci.bachelorproject.androidjsinteraction;
+package com.hci.bachelorproject.tactileCalendar;
 
 import org.junit.Test;
 

@@ -11,7 +11,8 @@ var dayScale = d3.scaleLinear()
 var svg = d3.select("body")
 .append("svg")
 .attr("width", width)
-.attr("height", height);
+.attr("height", height)
+.attr("id","svg");
 
 var defs = svg.append("defs")
 
@@ -77,7 +78,6 @@ function renderEvents(events) {
 		days.push(new Date(day))
 	}
 
-
 	var dayBoxes = svg.selectAll(".dayBox")
 	.data(days)
 	.enter()
@@ -85,7 +85,7 @@ function renderEvents(events) {
 	.attr("class", "dayBox")
 	.attr("x", function(e) {
 		var xDiffPerDay = dayScale(daysSinceEpoch(days[1]))-dayScale(daysSinceEpoch(days[0]))
-		return dayScale(daysSinceEpoch(e)) + (xDiffPerDay/2) + 10 
+		return dayScale(daysSinceEpoch(e)) + (xDiffPerDay/2) + 10
 	})
 	.attr("width", function(e) {
 		return dayScale(daysSinceEpoch(days[1]))-dayScale(daysSinceEpoch(days[0]))
@@ -95,15 +95,23 @@ function renderEvents(events) {
 	.on("mouseover", handleMouseOverDay)
 	.on("mouseout", cancelSpeech)
 
+    dayBoxes.attrs(dayBoxAttrs)
+
 	var eventBoxes = svg.selectAll(".eventBox")
-	.data(events)
+	//filter out allday events
+	.data(events.filter(function(e){return typeof e.start.dateTime !== "undefined"}))
 	.enter()
 	.append("rect")
-	.attr("class","eventBox")
+	.attr("class","eventBox");
 
 	eventBoxes
+	.attrs(eventBoxAttrs)
 	.attr("x", function(e) {
-		return dayScale(daysSinceEpoch(e.start.dateTime)) + 30*e.level - 28
+		console.log("dayScale")
+		console.log(dayScale(daysSinceEpoch(e.start.dateTime)))
+		console.log("level")
+		console.log(e.level)
+		return dayScale(daysSinceEpoch(e.start.dateTime)) + 30*e.level - 13
 	})
 	.attr("y", function(e) {
 		return timeScale(minutesSinceMidnight(e.start.dateTime))
@@ -125,15 +133,33 @@ function renderEvents(events) {
 		.enter()
 		.append("rect")
 		.attr("class", "hourMarker")
+		.attrs(hourMarkAttrs)
 		.attr("x", function() {
 			var xDiffPerDay = dayScale(daysSinceEpoch(days[1]))-dayScale(daysSinceEpoch(days[0]))
 			return dayScale(daysSinceEpoch(d)) + (xDiffPerDay/2) + 40
 		})
 		.attr("y", function(h) {
-			return timeScale(h*60)-7		
+			return timeScale(h*60)-7
 		})
 		.on("mouseover", handleMouseOverHourMark)
 		.on("mouseout", cancelSpeech)
 	});
+}
+
+function getSVG(){
+
+	var svg = document.getElementById("svg");
+	//get svg source.
+	var serializer = new XMLSerializer();
+	var source = serializer.serializeToString(svg);
+
+	//add name spaces.
+	if(!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)){
+	    source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+	}
+
+	//add xml declaration
+	source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+	console.log(source);
 
 }

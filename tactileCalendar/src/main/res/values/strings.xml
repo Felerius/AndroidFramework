@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AndroidJSInteraction</string>
+    <string name="app_name">TactileCalendar</string>
     <string name="connection_established">Connection established</string>
     <string name="lost_connection">Lost connection</string>
     <string name="could_not_connect">Could not connect to laser plotter.</string>

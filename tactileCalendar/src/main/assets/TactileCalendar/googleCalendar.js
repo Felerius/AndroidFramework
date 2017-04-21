@@ -8,7 +8,6 @@
   for (var i = 0; i < events.length; i++) {
         var event = JSON.parse(events[i]);
         console.log("-------------");
-        console.log(event)
         console.log(event.summary);
         console.log("id: ");
         console.log(event.id);

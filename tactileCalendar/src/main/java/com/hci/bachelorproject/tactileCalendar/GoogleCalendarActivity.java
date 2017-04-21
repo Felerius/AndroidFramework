@@ -1,4 +1,4 @@
-package com.hci.bachelorproject.androidjsinteraction;
+package com.hci.bachelorproject.tactileCalendar;
 
 /**
  * Created by Julius on 04.04.2017.
@@ -26,24 +26,31 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
-import android.text.method.ScrollingMovementMethod;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -51,14 +58,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
-import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnection;
-import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnector;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
+import static com.hci.bachelorproject.tactileCalendar.GoogleCalendarActivity.REQUEST_PERMISSION_ACCESS_COARSE_LOCATION;
+
 public class GoogleCalendarActivity extends Activity
-        implements EasyPermissions.PermissionCallbacks {
+        implements EasyPermissions.PermissionCallbacks, SensorEventListener {
     GoogleAccountCredential mCredential;
     //private TextView mOutputText;
     private Button mCallApiButton;
@@ -69,10 +77,21 @@ public class GoogleCalendarActivity extends Activity
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
     static final int REQUEST_PERMISSION_GET_ACCOUNTS = 1003;
-
+    static final int REQUEST_PERMISSION_ACCESS_COARSE_LOCATION = 1004;
     private static final String BUTTON_TEXT = "Call Google Calendar API";
     private static final String PREF_ACCOUNT_NAME = "accountName";
     private static final String[] SCOPES = { CalendarScopes.CALENDAR_READONLY };
+
+
+    //Shake event handling
+    private float mAccel; // acceleration apart from gravity
+    private SensorManager mSensorManager;
+    private float mAccelCurrent; // current acceleration including gravity
+    private float mAccelLast; // last acceleration including gravity
+    private long timeOfLastShakeEvent = System.currentTimeMillis();
+
+    SpeechRecognizer speechRecognizer;
+    private final int REQ_CODE_SPEECH_INPUT = 100;
 
     /**
      * Create the main activity.
@@ -110,12 +129,11 @@ public class GoogleCalendarActivity extends Activity
         mProgress.setMessage("Calling Google Calendar API ...");
 
         webView = new WebView(this);
-        webAppInterface = new WebAppInterface(this,webView);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
-        webView.addJavascriptInterface(webAppInterface, "Android");
         webView.setWebContentsDebuggingEnabled(true);
         activityLayout.addView(webView);
+        checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_PERMISSION_ACCESS_COARSE_LOCATION);
 
         setContentView(activityLayout);
 
@@ -125,9 +143,35 @@ public class GoogleCalendarActivity extends Activity
                 .setBackOff(new ExponentialBackOff());
 
 
+        speechRecognizer  = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
+
+        //Shake listener instantiation
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+        mAccel = 0.00f;
+        mAccelCurrent = SensorManager.GRAVITY_EARTH;
+        mAccelLast = SensorManager.GRAVITY_EARTH;
+
+
     }
 
+    private void checkPermission(String permission, int requestCode) {
+        if (requestCode == REQUEST_PERMISSION_ACCESS_COARSE_LOCATION){
+            if (ContextCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED){
+                webAppInterface = new WebAppInterface(getApplicationContext(),webView);
+                webView.addJavascriptInterface(webAppInterface, "Android");
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                    permission)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(GoogleCalendarActivity.this, new String[]{permission},
+                        requestCode);
 
+            }
+        }
+    }
 
     /**
      * Attempt to call the API, after verifying that all the preconditions are
@@ -183,6 +227,7 @@ public class GoogleCalendarActivity extends Activity
         }
     }
 
+
     /**
      * Called when an activity launched here (specifically, AccountPicker
      * and authorization) exits, giving you the requestCode you started it with,
@@ -228,6 +273,15 @@ public class GoogleCalendarActivity extends Activity
                     getResultsFromApi();
                 }
                 break;
+            case REQ_CODE_SPEECH_INPUT: {
+                if (resultCode == RESULT_OK && null != data) {
+
+                    ArrayList<String> result = data
+                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    webView.loadUrl("javascript:handleSpeech('" + result.get(0) + "');");
+                }
+                break;
+            }
         }
     }
 
@@ -257,7 +311,7 @@ public class GoogleCalendarActivity extends Activity
      */
     @Override
     public void onPermissionsGranted(int requestCode, List<String> list) {
-        // Do nothing.
+
     }
 
     /**
@@ -269,7 +323,13 @@ public class GoogleCalendarActivity extends Activity
      */
     @Override
     public void onPermissionsDenied(int requestCode, List<String> list) {
-        // Do nothing.
+        if (requestCode==REQUEST_PERMISSION_ACCESS_COARSE_LOCATION) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                    Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_PERMISSION_ACCESS_COARSE_LOCATION);
+
+            }
+        }
     }
 
     /**
@@ -326,6 +386,45 @@ public class GoogleCalendarActivity extends Activity
                 REQUEST_GOOGLE_PLAY_SERVICES);
         dialog.show();
     }
+
+    private void promptSpeechInput() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
+                "listening");
+        try {startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);
+        } catch (ActivityNotFoundException a) {
+            Toast.makeText(this,
+                    "speech not supported",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent se) {
+        float x = se.values[0];
+        float y = se.values[1];
+        float z = se.values[2];
+        mAccelLast = mAccelCurrent;
+        mAccelCurrent = (float) Math.sqrt((double) (x*x + y*y + z*z));
+        float delta = mAccelCurrent - mAccelLast;
+        mAccel = mAccel * 0.9f + delta; // perform low-cut filter
+
+        if (mAccel > 12 && System.currentTimeMillis() - timeOfLastShakeEvent >5000) {
+            //Toast toast = Toast.makeText(getApplicationContext(), "Gerät wurde geschaket.", Toast.LENGTH_LONG);
+            //toast.show();
+            timeOfLastShakeEvent = System.currentTimeMillis();
+            promptSpeechInput();
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
 
     /**
      * An asynchronous task that handles the Google Calendar API call.
@@ -443,5 +542,9 @@ public class GoogleCalendarActivity extends Activity
                 Toast.makeText(getApplicationContext(),"Request cancelled.",Toast.LENGTH_LONG);
             }
         }
+
+
+
+
     }
 }

@@ -7,11 +7,10 @@ var talkingSpeed = 1.5
 
 var commands = {
 	'create event *summary from here': startEventCreation,
-	'to here': endEventCreation
+	'to here': endEventCreation,
+	'test' : function(){console.log("test");}
 };
 annyang.addCommands(commands);
-
-console.log("staring speach recog")
 annyang.start();
 
 function timeInText(date) {
@@ -49,9 +48,11 @@ function textFor(event) {
 }
 
 function speak(text) {
-	var msg = new SpeechSynthesisUtterance(text);
-	msg.rate = talkingSpeed
+    Android.speak(text);
+	/*var msg = new SpeechSynthesisUtterance(text);
+	msg.rate = talkingSpeed;
 	window.speechSynthesis.speak(msg);
+	console.log("Speaking...");*/
 }
 
 function cancelSpeech() {
@@ -59,7 +60,8 @@ function cancelSpeech() {
 }
 
 function handleMouseOverEvent(e, i) {
-  	speak(textFor(e))
+  	speak(textFor(e));
+	console.log("mouse over event " + e);
 }
 
 function handleMouseOverDay(e, i) {
@@ -67,11 +69,13 @@ function handleMouseOverDay(e, i) {
 	if(day != lastDay) {
 		lastDay = day
 		speak(weekDays[e.getDay()])
+		console.log("mouse over day " + e);
 	}
 }
 
 function handleMouseOverHourMark(e, i) {
   	speak(hourMarks[e])
+		console.log("mouse over mark " + e);
 }
 
 
@@ -130,4 +134,24 @@ function endEventCreation() {
 		console.log("No starttime specified")	
 	}
 	curEvent = {}
+}
+
+function handleSpeech(speechInput){
+    speechInput = speechInput.toLowerCase();
+    console.log("received " + speechInput);
+    var patt = new RegExp("create event * from here");
+    var pattFromHere = /create[\s]*event/i
+    var pattToHere = /to[\s]*here/i
+    var pattTest = new RegExp("test");
+    if (pattFromHere.test(speechInput)){
+        var substring = speechInput.substring(speechInput.indexOf("event") + 5);
+        console.log(substring);
+        startEventCreation(substring);
+    } else if(pattToHere.test(speechInput)){
+        endEventCreation();
+    } else if(pattTest.test(speechInput)){
+        console.log(speechInput.match("Test"));
+    } else {
+        console.log(speechInput);
+    }
 }
