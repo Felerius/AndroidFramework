@@ -75,9 +75,10 @@ public class WebAppInterface {
 
     //framework method
     @JavascriptInterface
-    public void sendSVGToLaserPlotter(String svgString){
+    public void sendSVGToLaserPlotter(String svgString, int versionNr){
         Log.i("WebAppInterface", "Sending to plotter " + svgString);
         Toast.makeText(mContext, "Printing SVG", Toast.LENGTH_SHORT).show();
+        svgTransmitter.sendToLaserPlotter(versionNr+"");
         svgTransmitter.sendToLaserPlotter(svgString);
     }
 

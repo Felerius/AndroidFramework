@@ -29,7 +29,7 @@ defs.append("pattern")
 		.attr("x2", 20)
 		.attr("y2", 0)
 		.attr("stroke", "black")
-		.attr("stroke-width", 3)
+		.attr("stroke-width", 3);
 
 defs.append("pattern")
 	.attr("id", "hourMarkFill")
@@ -44,7 +44,14 @@ defs.append("pattern")
 		.attr("x2", 0)
 		.attr("y2", 20)
 		.attr("stroke", "black")
-		.attr("stroke-width", 2)
+		.attr("stroke-width", 2);
+
+
+var mainGroup = svg.append("g")
+.attr("id","mainGroup")
+.attr('transform', "translate(0,30)scale(0.15)");
+
+
 
 function renderEvents(events) {
   //gets called from googleCalendar.js when events are obtained from API
@@ -78,7 +85,7 @@ function renderEvents(events) {
 		days.push(new Date(day))
 	}
 
-	var dayBoxes = svg.selectAll(".dayBox")
+	var dayBoxes = d3.select("#mainGroup").selectAll(".dayBox")
 	.data(days)
 	.enter()
 	.append("rect")
@@ -97,7 +104,7 @@ function renderEvents(events) {
 
     dayBoxes.attrs(dayBoxAttrs)
 
-	var eventBoxes = svg.selectAll(".eventBox")
+	var eventBoxes = d3.select("#mainGroup").selectAll(".eventBox")
 	//filter out allday events
 	.data(events.filter(function(e){return typeof e.start.dateTime !== "undefined"}))
 	.enter()
@@ -123,7 +130,7 @@ function renderEvents(events) {
 	.on("mouseout", cancelSpeech);
 
 	//Add hour marks
-	var dayGroups = svg.selectAll("g")
+	var dayGroups = d3.select("#mainGroup").selectAll("g")
 	.data(days)
 	.enter()
 	.append("g")
@@ -144,6 +151,8 @@ function renderEvents(events) {
 		.on("mouseover", handleMouseOverHourMark)
 		.on("mouseout", cancelSpeech)
 	});
+
+	printSVG();
 }
 
 function getSVG(){
@@ -161,5 +170,42 @@ function getSVG(){
 	//add xml declaration
 	source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
 	console.log(source);
-
+    return source;
 }
+
+function getSVGDiff(){
+
+	var svg = document.getElementById("svg");
+	//get svg source.
+    traverseDOM(svg);
+    svgVersionNr+=1;
+	var serializer = new XMLSerializer();
+
+	var source = serializer.serializeToString(svg);
+
+	//add name spaces.
+	if(!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)){
+	    source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+	}
+
+	//add xml declaration
+	source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+	console.log(source);
+    return source;
+}
+
+function traverseDOM(root){
+    if (root.getAttribute('version')==null){
+        root.setAttribute('version', svgVersionNr);
+    }
+    var children = root.childNodes;
+    for (var i =0; i <children.length; i++){
+        traverseDOM(children[i]);
+    }
+}
+
+function printSVG(){
+
+    Android.sendSVGToLaserPlotter(getSVGDiff(), versionNr);
+}
+
