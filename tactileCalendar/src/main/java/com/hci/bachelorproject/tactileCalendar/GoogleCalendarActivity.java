@@ -100,7 +100,8 @@ public class GoogleCalendarActivity extends Activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        LinearLayout activityLayout = new LinearLayout(this);
+        setContentView(R.layout.activity_main);
+        /*LinearLayout activityLayout = new LinearLayout(this);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.MATCH_PARENT);
@@ -111,37 +112,28 @@ public class GoogleCalendarActivity extends Activity
         ViewGroup.LayoutParams tlp = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
-
-        mCallApiButton = new Button(this);
-        mCallApiButton.setText(BUTTON_TEXT);
-        mCallApiButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mCallApiButton.setEnabled(false);
-                //mOutputText.setText("");
-                getResultsFromApi();
-                mCallApiButton.setEnabled(true);
-            }
-        });
-        activityLayout.addView(mCallApiButton);
+*/
 
         mProgress = new ProgressDialog(this);
         mProgress.setMessage("Calling Google Calendar API ...");
 
-        webView = new WebView(this);
+        webView = (WebView) findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.setWebContentsDebuggingEnabled(true);
-        activityLayout.addView(webView);
+        //activityLayout.addView(webView);
         checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_PERMISSION_ACCESS_COARSE_LOCATION);
 
-        setContentView(activityLayout);
+        //setContentView(activityLayout);
 
         // Initialize credentials and service object.
         mCredential = GoogleAccountCredential.usingOAuth2(
                 getApplicationContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff());
 
+        getResultsFromApi();
+
+        //speech related
 
         speechRecognizer  = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
 

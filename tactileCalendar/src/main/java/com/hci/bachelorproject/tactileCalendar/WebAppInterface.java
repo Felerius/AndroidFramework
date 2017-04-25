@@ -1,11 +1,6 @@
 package com.hci.bachelorproject.tactileCalendar;
 
-import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.Intent;
-import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
@@ -19,7 +14,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
-import java.util.Locale;
+
+import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
 
 /**
  * Created by Julius on 01.03.2017.

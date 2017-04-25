@@ -1,0 +1,104 @@
+var maxAirbarHeight = 1936;
+var maxAirbarWidth = 3452;
+
+var sizeFactor = maxAirbarWidth / svg.attr("width");
+console.log(sizeFactor);
+
+
+function simulate(element, eventName)
+{
+    var options = extend(defaultOptions, arguments[2] || {});
+    var oEvent, eventType = null;
+
+    for (var name in eventMatchers)
+    {
+        if (eventMatchers[name].test(eventName)) { eventType = name; break; }
+    }
+
+    if (!eventType)
+        throw new SyntaxError('Only HTMLEvents and MouseEvents interfaces are supported');
+
+    if (document.createEvent)
+    {
+        oEvent = document.createEvent(eventType);
+        if (eventType == 'HTMLEvents')
+        {
+            oEvent.initEvent(eventName, options.bubbles, options.cancelable);
+        }
+        else
+        {
+            oEvent.initMouseEvent(eventName, options.bubbles, options.cancelable, document.defaultView,
+            options.button, options.pointerX, options.pointerY, options.pointerX, options.pointerY,
+            options.ctrlKey, options.altKey, options.shiftKey, options.metaKey, options.button, element);
+        }
+        element.dispatchEvent(oEvent);
+    }
+    else
+    {
+        options.clientX = options.pointerX;
+        options.clientY = options.pointerY;
+        var evt = document.createEventObject();
+        oEvent = extend(evt, options);
+        element.fireEvent('on' + eventName, oEvent);
+    }
+    return element;
+}
+
+function extend(destination, source) {
+    for (var property in source)
+      destination[property] = source[property];
+    return destination;
+}
+
+var eventMatchers = {
+    'HTMLEvents': /^(?:load|unload|abort|error|select|change|submit|reset|focus|blur|resize|scroll)$/,
+    'MouseEvents': /^(?:click|dblclick|mouse(?:down|up|over|move|out))$/
+}
+var defaultOptions = {
+    pointerX: 0,
+    pointerY: 0,
+    button: 0,
+    ctrlKey: false,
+    altKey: false,
+    shiftKey: false,
+    metaKey: false,
+    bubbles: true,
+    cancelable: true
+}
+
+function getInputData(x1,y1,x2,y2){
+    //simulate mouse event
+    x1 = x1/sizeFactor;
+    y2 = y2/sizeFactor;
+
+
+    console.log(x1 + ", " + y1 + ", " + x2 + ", " + y2);
+    //simulate(document.elementFromPoint(x,y),"mouseover", { pointerX: x, pointerY: y });
+    //simulate(document.elementFromPoint(x,y),"mouseover", { pointerX: x, pointerY: y });
+
+    simulate(document.elementFromPoint(x1,y1),"mouseover", { pointerX: x1, pointerY: y1});
+    simulate(document.elementFromPoint(x2,y2),"mouseover", { pointerX: x2, pointerY: y2});
+
+
+    //console.log(document.elementFromPoint(x,y));
+
+
+}
+
+function getAllElementsFromPoint(x, y) {
+    var elements = [];
+    var display = [];
+    var item = document.elementFromPoint(x, y);
+    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement) {
+        elements.push(item);
+        display.push(item.style.display);
+        item.style.display = "none";
+        item = document.elementFromPoint(x, y);
+    }
+    // restore display property
+    for (var i = 0; i < elements.length; i++) {
+        elements[i].style.display = display[i];
+    }
+    return elements;
+}
+

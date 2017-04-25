@@ -206,6 +206,6 @@ function traverseDOM(root){
 
 function printSVG(){
 
-    Android.sendSVGToLaserPlotter(getSVGDiff(), versionNr);
+    Android.sendSVGToLaserPlotter(getSVGDiff(), svgVersionNr);
 }
 

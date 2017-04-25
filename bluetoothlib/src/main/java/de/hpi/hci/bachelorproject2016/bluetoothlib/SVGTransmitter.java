@@ -1,6 +1,7 @@
-package com.hci.bachelorproject.tactileCalendar;
+package de.hpi.hci.bachelorproject2016.bluetoothlib;
 
 import android.content.Context;
+import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.webkit.WebView;
@@ -58,19 +59,22 @@ public class SVGTransmitter {
             @Override
             public void connectionEstablished() {
                 Log.d(TAG, "connectionEstablished: ");
-                tts.speak(context.getString(R.string.connection_established) , TextToSpeech.QUEUE_ADD, null, utteranceId);
+                speak(context.getString(R.string.connection_established));
+
                 sendCommands(printerConnector, svgData);
             }
 
             @Override
             public void connectionLost() {
-                tts.speak(context.getString(R.string.lost_connection), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+                speak(context.getString(R.string.lost_connection));
+
                 printerConnector = null;
             }
 
             @Override
             public void connectionRefused() {
-                tts.speak(context.getString(R.string.could_not_connect), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+                speak(context.getString(R.string.could_not_connect));
+
                 printerConnector = null;
             }
 
@@ -80,15 +84,16 @@ public class SVGTransmitter {
                 String [] xy=message.split(",");
                 final int x1=Integer.valueOf(xy[0]);
                 final int y1=Integer.valueOf(xy[1]);
-                int x2=Integer.valueOf(xy[2]);
-                int y2=Integer.valueOf(xy[3]);
+                final int x2=Integer.valueOf(xy[2]);
+                final int y2=Integer.valueOf(xy[3]);
 
                 Log.d(TAG, "newCharsAvailable: x: "+x1);
                 Log.d(TAG, "newCharsAvailable: y: "+y1);
+
                 Runnable sendInputDataOnUiThread = new Runnable() {
                     @Override
                     public void run() {
-                        webView.loadUrl("javascript:getInputData(" + x1 + "," + y1 + ");");
+                        webView.loadUrl("javascript:getInputData(" + x1 + "," + y1 + "," + x2 + "," + y2 + ");");
                     }
                 };
                 webView.post(sendInputDataOnUiThread);
@@ -97,28 +102,36 @@ public class SVGTransmitter {
         printerConnector = new PrinterConnector(connectionMode, context.getString(R.string.bluetooth_device_name), "192.168.42.132", 8090,
                 context, onConnectionCallBack);
         printerConnector.initializeConnection();
-        Log.i("SVGTransmitter", "initialized prinnterconnector");
     }
 
 
     public void sendToLaserPlotter(String svgString) {
         svgData = svgString;
         if (printerConnector.device == null || printerConnector.getConnection() == null) {
-            tts.speak(context.getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_ADD, null, utteranceId);
+            speak(context.getString(R.string.connecting_laser_plotter));
             printerConnector.initializeConnection();
         } else {
             if (!printerConnector.getConnection().isConnected()) {
-                tts.speak(context.getString(R.string.connecting_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+                speak(context.getString(R.string.connecting_laser_plotter));
+
                 printerConnector.initializeConnection();
             } else {
-                tts.speak(context.getString(R.string.sending_img_laser_plotter), TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+                speak(context.getString(R.string.sending_img_laser_plotter));
                 sendCommands(printerConnector, svgString);
             }
         }
     }
 
+    private void speak(String text){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+        } else {
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }
 
-    protected void sendCommands(PrinterConnector printerConnector, String svgString) {
+
+    public void sendCommands(PrinterConnector printerConnector, String svgString) {
         //parser = new SVGParser(svgString,true);
         Log.d(TAG,"Sending commands");
         printerConnector.getConnection().write(svgString);

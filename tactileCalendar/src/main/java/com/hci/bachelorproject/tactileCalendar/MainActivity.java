@@ -60,13 +60,13 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         //webView.loadUrl("file:///android_asset/d3test.html");
-        trigger = (Button)findViewById(R.id.button);
+        /*trigger = (Button)findViewById(R.id.button);
         trigger.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 webView.loadUrl("javascript:showAndroidToast('Toast');");
             }
-        });
+        });*/
 
 
     }
