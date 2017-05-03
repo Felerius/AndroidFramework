@@ -11,6 +11,7 @@
       <module fileurl="file://$PROJECT_DIR$/svgparser/svgparser.iml" filepath="$PROJECT_DIR$/svgparser/svgparser.iml" />
       <module fileurl="file://$PROJECT_DIR$/tactileCalendar/tactileCalendar.iml" filepath="$PROJECT_DIR$/tactileCalendar/tactileCalendar.iml" />
       <module fileurl="file://$PROJECT_DIR$/tactilepiano/tactilepiano.iml" filepath="$PROJECT_DIR$/tactilepiano/tactilepiano.iml" />
+      <module fileurl="file://$PROJECT_DIR$/webapplib/webapplib.iml" filepath="$PROJECT_DIR$/webapplib/webapplib.iml" />
     </modules>
   </component>
 </project>

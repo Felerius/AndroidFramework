@@ -26,6 +26,7 @@ public class SVGTransmitter {
     String utteranceId = "utteranceId";
     WebView webView;
     String svgData="";
+    byte[] svgBytes;
     Context context;
     public SVGTransmitter(Context context, PrinterConnector printerConnector){
         initTTS(context);
@@ -65,7 +66,7 @@ public class SVGTransmitter {
                 Log.d(TAG, "connectionEstablished: ");
                 speak(context.getString(R.string.connection_established));
 
-                sendCommands(printerConnector, svgData);
+                sendCommands(printerConnector, svgBytes);
             }
 
             @Override
@@ -119,7 +120,7 @@ public class SVGTransmitter {
     }
 
 
-    public void sendToLaserPlotter(String svgString) {
+    /*public void sendToLaserPlotter(String svgString) {
         svgData = svgString;
         if (printerConnector.device == null || printerConnector.getConnection() == null) {
             speak(context.getString(R.string.connecting_laser_plotter));
@@ -134,6 +135,23 @@ public class SVGTransmitter {
                 sendCommands(printerConnector, svgString);
             }
         }
+    }*/
+
+    public void sendToLaserPlotter(byte[] svgBytes) {
+        this.svgBytes = svgBytes;
+        if (printerConnector.device == null || printerConnector.getConnection() == null) {
+            speak(context.getString(R.string.connecting_laser_plotter));
+            printerConnector.initializeConnection();
+        } else {
+            if (!printerConnector.getConnection().isConnected()) {
+                speak(context.getString(R.string.connecting_laser_plotter));
+
+                printerConnector.initializeConnection();
+            } else {
+                speak(context.getString(R.string.sending_img_laser_plotter));
+                sendCommands(printerConnector, svgBytes);
+            }
+        }
     }
 
     private void speak(String text){
@@ -145,18 +163,16 @@ public class SVGTransmitter {
     }
 
 
-    public void sendCommands(PrinterConnector printerConnector, String svgString) {
+    /*public void sendCommands(PrinterConnector printerConnector, String svgString) {
         //parser = new SVGParser(svgString,true);
         Log.d(TAG,"Sending commands");
         printerConnector.getConnection().write(svgString);
-        /*parser = new SVGParser(svgString, new PointF(20, 20));
-        ArrayList<Instruction> instructions = new ArrayList<>();
-        parser.setInstructions(instructions);
-        parser.startParsing();
 
-        for (Instruction instruction : instructions) {
-            Log.d("Connection", "sending instruction " + instruction.buildInstruction(Instruction.Mode.GPGL));
-            printerConnector.connection.write(instruction.buildInstruction(Instruction.Mode.GPGL));
-        }*/
+    }*/
+    public void sendCommands(PrinterConnector printerConnector, byte[] svgBytes) {
+        //parser = new SVGParser(svgString,true);
+        Log.d(TAG,"Sending commands " + new String(svgBytes));
+        printerConnector.getConnection().sendData(svgBytes);
+
     }
 }

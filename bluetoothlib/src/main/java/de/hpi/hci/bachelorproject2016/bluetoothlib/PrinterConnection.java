@@ -13,5 +13,6 @@ public abstract class PrinterConnection {
     abstract public void write(String data);
     abstract public void connect();
     abstract public boolean isConnected();
+    abstract public boolean sendData(byte[] bytes);
     abstract public void tearDown();
 }

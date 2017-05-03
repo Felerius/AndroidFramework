@@ -137,7 +137,6 @@ public class BluetoothConnection extends PrinterConnection{
             return false;
         }
 
-
     }
     public void sendData(char[] chars){
 
@@ -183,6 +182,7 @@ public class BluetoothConnection extends PrinterConnection{
                         e.printStackTrace();
                         if(cb!=null)cb.connectionLost();
                         isConnected=false;
+
                     }
 
                 }

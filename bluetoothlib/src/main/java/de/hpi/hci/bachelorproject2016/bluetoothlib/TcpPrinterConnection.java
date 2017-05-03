@@ -44,13 +44,20 @@ public class TcpPrinterConnection extends PrinterConnection {
 
    }
 
-    @Override
-    public void write(String data) {
+    public boolean sendData(byte[] bytes){
         try{
-            if(out!=null)out.write(data.getBytes());
+            if(out!=null)out.write(bytes);
+            return true;
         }catch (Exception e){
             e.printStackTrace();
+            Log.d("WRITE", "FAILED");
+            return false;
         }
+
+    }
+    @Override
+    public void write(String data) {
+        sendData(data.getBytes());
     }
 
     @Override

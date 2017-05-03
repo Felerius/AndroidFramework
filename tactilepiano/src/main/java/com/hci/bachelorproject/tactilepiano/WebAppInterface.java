@@ -8,6 +8,9 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+
 import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
 
 /**
@@ -51,11 +54,19 @@ public class WebAppInterface {
 
     //framework method
     @JavascriptInterface
-    public void sendSVGToLaserPlotter(String svgString, int versionNr){
+    public void sendSVGToLaserPlotter(String svgString, String printJobUUID){
         Log.i("WebAppInterface", "Sending to plotter " + svgString);
         Toast.makeText(mContext, "Printing SVG", Toast.LENGTH_SHORT).show();
-        svgTransmitter.sendToLaserPlotter(versionNr+"");
-        svgTransmitter.sendToLaserPlotter(svgString);
+        byte[] uuidBytes = printJobUUID.getBytes();
+        byte[] svgBytes = svgString.getBytes();
+        int length = svgBytes.length;
+        ByteBuffer bb = ByteBuffer.wrap(new byte[length + 4 + 36]);
+        bb.put(uuidBytes);
+        bb.putInt(length);
+        bb.put(svgBytes);
+        byte[] byteArray = bb.array();
+        //svgTransmitter.sendToLaserPlotter(versionNr+"");
+        svgTransmitter.sendToLaserPlotter(byteArray);
     }
 
     //framework method

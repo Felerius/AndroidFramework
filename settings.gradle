@@ -1,2 +1,2 @@
-include ':speechlib', ':svgparser', ':fotoapp', ':bluetoothlib', ':fotoapptalkback', ':tactileCalendar', ':airbar_tracking_app', ':tactilepiano'
+include ':speechlib', ':svgparser', ':fotoapp', ':bluetoothlib', ':fotoapptalkback', ':tactileCalendar', ':airbar_tracking_app', ':tactilepiano', ':webapplib'
 //':braillelib'
