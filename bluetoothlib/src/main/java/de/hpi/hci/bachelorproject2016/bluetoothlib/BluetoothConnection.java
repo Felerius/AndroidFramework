@@ -158,7 +158,7 @@ public class BluetoothConnection extends PrinterConnection{
             try{
                 socket.close();
             }catch (Exception e){
-                Log.d(TAG, "teardown: coulnt close socket");
+                Log.d(TAG, "teardown: couldn't close socket");
             }
         }
     }

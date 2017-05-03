@@ -1,4 +1,6 @@
 
+
+const lastPlayed = "lastPlayed";
 var svg = d3.select("body")
 .append("svg")
 .attr("width", width)
@@ -9,7 +11,7 @@ var svg = d3.select("body")
 var mainGroup = svg.append("g")
 .attr("id","mainGroup");
 
-var tones = ["c","d","e","f","g","a","b"];
+var tones = ["c","d","e","f","g","a","b","c5"];
 var specialTones = ["cis","dis","fis","gis","ais"];
 var i = 0;
 mainGroup.selectAll(".keys")
@@ -25,12 +27,18 @@ mainGroup.selectAll(".keys")
 .attr("height",keyHeight)
 .attr("stroke","black")
 .attr("fill","white")
-.on("mouseover", onMouseOverKey);
+.attr(lastPlayed, Date.now())
+.on("click", onMouseOverKey);
 
 printSVG();
 
 function onMouseOverKey(tone){
-    Android.playTone(tone)
+    //var el = d3.select(this);
+    //console.log(el.attr(lastPlayed));
+    //if (Date.now() - el.attr(lastPlayed) > 150){
+    Android.playTone(tone);
+    //}
+    //el.attr(lastPlayed, Date.now());
 }
 
 function getSVG(){
@@ -86,4 +94,5 @@ function printSVG(){
 
     Android.sendSVGToLaserPlotter(getSVGDiff(), svgVersionNr);
 }
+
 

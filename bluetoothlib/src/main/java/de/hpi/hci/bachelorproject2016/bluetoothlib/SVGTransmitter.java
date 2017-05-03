@@ -6,6 +6,10 @@ import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.webkit.WebView;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnection;
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnector;
 
@@ -80,20 +84,30 @@ public class SVGTransmitter {
 
             @Override
             public void newCharsAvailable(byte[] c, int byteCount) {
-                final String message=new String(c,0,byteCount);
-                String [] xy=message.split(",");
-                final int x1=Integer.valueOf(xy[0]);
-                final int y1=Integer.valueOf(xy[1]);
-                final int x2=Integer.valueOf(xy[2]);
-                final int y2=Integer.valueOf(xy[3]);
+
+                IntBuffer intBuf =
+                        ByteBuffer.wrap(c)
+                                .order(ByteOrder.BIG_ENDIAN)
+                                .asIntBuffer();
+                int[] array = new int[intBuf.remaining()];
+                intBuf.get(array);
+                final int x1=Integer.valueOf(array[0]);
+                final int y1=Integer.valueOf(array[1]);
+                final int x2=Integer.valueOf(array[2]);
+                final int y2=Integer.valueOf(array[3]);
+                final int eventType1=Integer.valueOf(array[4]);
+                final int eventType2=Integer.valueOf(array[5]);
+
 
                 Log.d(TAG, "newCharsAvailable: x: "+x1);
                 Log.d(TAG, "newCharsAvailable: y: "+y1);
+                Log.d(TAG, "newCharsAvailable: event type 1: "+eventType1);
+                Log.d(TAG, "newCharsAvailable: event type 2: "+eventType2);
 
                 Runnable sendInputDataOnUiThread = new Runnable() {
                     @Override
                     public void run() {
-                        webView.loadUrl("javascript:getInputData(" + x1 + "," + y1 + "," + x2 + "," + y2 + ");");
+                        webView.loadUrl("javascript:getInputData(" + x1 + "," + y1 + "," + x2 + "," + y2 + "," + eventType1 + "," + eventType2 + ");");
                     }
                 };
                 webView.post(sendInputDataOnUiThread);

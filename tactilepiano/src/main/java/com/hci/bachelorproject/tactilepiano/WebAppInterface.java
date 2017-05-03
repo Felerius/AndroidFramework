@@ -19,8 +19,9 @@ public class WebAppInterface {
     SVGTransmitter svgTransmitter;
     TextToSpeech tts;
     private SoundPool soundPool;
-    private int sound_c,sound_d, sound_e, sound_f, sound_g, sound_a, sound_b;
+    private int sound_c,sound_d, sound_e, sound_f, sound_g, sound_a, sound_b, sound_c5;
     private int lastToneVal=0;
+
     private long lastTimeStamp;
 
     WebView webView;
@@ -45,6 +46,7 @@ public class WebAppInterface {
         sound_g = soundPool.load(mContext,R.raw.g_4,1);
         sound_a = soundPool.load(mContext,R.raw.a_4,1);
         sound_b = soundPool.load(mContext,R.raw.b_4,1);
+        sound_c5= soundPool.load(mContext,R.raw.c_5,1);
     }
 
     //framework method
@@ -75,14 +77,14 @@ public class WebAppInterface {
             case "g": toneVal = sound_g; break;
             case "a": toneVal = sound_a; break;
             case "b": toneVal = sound_b; break;
-
+            case "c5": toneVal = sound_c5; break;
         }
 
         Log.i("Piano",toneVal+"");
         long currentTimeStamp = System.currentTimeMillis();
-        if (toneVal!=lastToneVal || currentTimeStamp - lastTimeStamp>150) {
+        //if (toneVal!=lastToneVal || currentTimeStamp - lastTimeStamp>150) {
             soundPool.play(toneVal, 1, 1, 0, 0, 1);
-        }
+        //}
         lastToneVal = toneVal;
         lastTimeStamp = System.currentTimeMillis();
     }

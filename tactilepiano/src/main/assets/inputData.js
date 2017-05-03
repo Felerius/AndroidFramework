@@ -1,6 +1,9 @@
 var maxAirbarHeight = 1936;
 var maxAirbarWidth = 3452;
 
+var lastx2=0;
+var lasty2=0
+
 var sizeFactor = maxAirbarWidth / svg.attr("width");
 console.log(sizeFactor);
 
@@ -66,24 +69,43 @@ var defaultOptions = {
     cancelable: true
 }
 
-function getInputData(x1,y1,x2,y2){
+function getInputData(x1,y1,x2,y2,eventType1,eventType2){
     //simulate mouse event
     x1 = x1/sizeFactor;
+    y1 = y1/sizeFactor;
+    x2 = x2/sizeFactor;
     y2 = y2/sizeFactor;
 
 
-    console.log(x1 + ", " + y1 + ", " + x2 + ", " + y2);
+
+    console.log(x1 + ", " + y1);
+    console.log(x2 + ", " + y2);
     //simulate(document.elementFromPoint(x,y),"mouseover", { pointerX: x, pointerY: y });
     //simulate(document.elementFromPoint(x,y),"mouseover", { pointerX: x, pointerY: y });
 
-    simulate(document.elementFromPoint(x1,y1),"mouseover", { pointerX: x1, pointerY: y1});
-    simulate(document.elementFromPoint(x2,y2),"mouseover", { pointerX: x2, pointerY: y2});
+    console.log(document.elementFromPoint(x1,y1));
+    console.log(eventType1);
+    console.log(eventType2);
 
-
-    //console.log(document.elementFromPoint(x,y));
-
+    checkEventType(eventType1,x1,y1);
+    //simulate(document.elementFromPoint(x1,y1),"mouseover", { pointerX: x1, pointerY: y1});
+    if (lastx2!=x2 && lasty2!=y2){
+        checkEventType(eventType2,x2,y2);
+        lastx2 = x2;
+        lasty2 = y2;
+    }
 
 }
+
+function checkEventType(eventType,x,y){
+
+    switch(eventType){
+        case 0: simulate(document.elementFromPoint(x,y),"mouseover", { pointerX: x, pointerY: y});break;
+        case 1: simulate(document.elementFromPoint(x,y),"click", { pointerX: x, pointerY: y});break;
+        case 2: simulate(document.elementFromPoint(x,y),"mouseout", { pointerX: x, pointerY: y});break;
+    }
+}
+
 
 function getAllElementsFromPoint(x, y) {
     var elements = [];
