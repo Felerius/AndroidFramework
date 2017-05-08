@@ -9,6 +9,7 @@ import android.webkit.WebView;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.Arrays;
 
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnection;
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnector;
@@ -92,26 +93,36 @@ public class SVGTransmitter {
                                 .asIntBuffer();
                 int[] array = new int[intBuf.remaining()];
                 intBuf.get(array);
-                final int x1=Integer.valueOf(array[0]);
-                final int y1=Integer.valueOf(array[1]);
-                final int x2=Integer.valueOf(array[2]);
-                final int y2=Integer.valueOf(array[3]);
-                final int eventType1=Integer.valueOf(array[4]);
-                final int eventType2=Integer.valueOf(array[5]);
+                final int type = Integer.valueOf(array[0]);
+                switch (type){
+                    case 0: final int x1=Integer.valueOf(array[1]);
+                        final int y1=Integer.valueOf(array[2]);
+                        final int x2=Integer.valueOf(array[3]);
+                        final int y2=Integer.valueOf(array[4]);
+                        final int eventType1=Integer.valueOf(array[5]);
+                        final int eventType2=Integer.valueOf(array[6]);
 
 
-                Log.d(TAG, "newCharsAvailable: x: "+x1);
-                Log.d(TAG, "newCharsAvailable: y: "+y1);
-                Log.d(TAG, "newCharsAvailable: event type 1: "+eventType1);
-                Log.d(TAG, "newCharsAvailable: event type 2: "+eventType2);
+                        Log.d(TAG, "newCharsAvailable: x: "+x1);
+                        Log.d(TAG, "newCharsAvailable: y: "+y1);
+                        Log.d(TAG, "newCharsAvailable: event type 1: "+eventType1);
+                        Log.d(TAG, "newCharsAvailable: event type 2: "+eventType2);
 
-                Runnable sendInputDataOnUiThread = new Runnable() {
-                    @Override
-                    public void run() {
-                        webView.loadUrl("javascript:getInputData(" + x1 + "," + y1 + "," + x2 + "," + y2 + "," + eventType1 + "," + eventType2 + ");");
-                    }
-                };
-                webView.post(sendInputDataOnUiThread);
+                        Runnable sendInputDataOnUiThread = new Runnable() {
+                            @Override
+                            public void run() {
+                                webView.loadUrl("javascript:getInputData(" + x1 + "," + y1 + "," + x2 + "," + y2 + "," + eventType1 + "," + eventType2 + ");");
+                            }
+                        };
+                        webView.post(sendInputDataOnUiThread);
+                        break;
+                    case 1:
+                        Log.i("UUID", "received uuid");
+                        byte [] subArray = Arrays.copyOfRange(c, 4, byteCount);
+                        String uuid = new String(subArray);
+                        Log.i("received uuid", uuid);
+                }
+
             }
         };
         printerConnector = new PrinterConnector(connectionMode, context.getString(R.string.bluetooth_device_name), "192.168.42.132", 8090,
