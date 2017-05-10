@@ -16,6 +16,7 @@ var svg = d3.select("body")
 
 var defs = svg.append("defs")
 
+
 defs.append("pattern")
 	.attr("id", "eventFill")
 	.attr("x", 0)

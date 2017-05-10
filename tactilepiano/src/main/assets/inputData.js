@@ -1,6 +1,6 @@
 var maxAirbarHeight = 1936;
 var maxAirbarWidth = 3452;
-
+//maxAirbarWidth / maxAirbarHeight = 1,78305
 var lastx2=0;
 var lasty2=0
 
@@ -71,11 +71,14 @@ var defaultOptions = {
 
 function getInputData(x1,y1,x2,y2,eventType1,eventType2){
     //simulate mouse event
-    x1 = x1/sizeFactor;
+    /*x1 = x1/sizeFactor;
     y1 = y1/sizeFactor;
     x2 = x2/sizeFactor;
-    y2 = y2/sizeFactor;
-
+    y2 = y2/sizeFactor;*/
+    x1 = (maxAirbarWidth - x1)/10;
+    y1 = (maxAirbarHeight - y1)/10;
+    x2 = (maxAirbarWidth - x2)/10;
+    y2 = (maxAirbarHeight - y2)/10;
 
 
     console.log(x1 + ", " + y1);

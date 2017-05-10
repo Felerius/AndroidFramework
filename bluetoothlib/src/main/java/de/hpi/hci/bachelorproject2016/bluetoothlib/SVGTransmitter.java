@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.Arrays;
+import java.util.Locale;
 
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnection;
 import de.hpi.hci.bachelorproject2016.bluetoothlib.PrinterConnector;
@@ -55,6 +56,7 @@ public class SVGTransmitter {
 
             }
         });
+        tts.setLanguage(Locale.ENGLISH);
     }
 
     private void initPrinterConnector(){
@@ -86,7 +88,7 @@ public class SVGTransmitter {
 
             @Override
             public void newCharsAvailable(byte[] c, int byteCount) {
-
+                Log.d("new chars", "");
                 IntBuffer intBuf =
                         ByteBuffer.wrap(c)
                                 .order(ByteOrder.BIG_ENDIAN)
@@ -117,10 +119,21 @@ public class SVGTransmitter {
                         webView.post(sendInputDataOnUiThread);
                         break;
                     case 1:
-                        Log.i("UUID", "received uuid");
-                        byte [] subArray = Arrays.copyOfRange(c, 4, byteCount);
+                        int status = Integer.valueOf(array[1]);
+                        Log.d("Status", status + "");
+                        Log.d("UUID", "received uuid");
+                        byte [] subArray = Arrays.copyOfRange(c, 8, 44);
                         String uuid = new String(subArray);
-                        Log.i("received uuid", uuid);
+                        Log.d("received uuid", uuid);
+                        switch (status){
+                            case 0:
+                                String text = "Finished printing";
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                    tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+                                } else {
+                                    tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+                                }
+                        }
                 }
 
             }

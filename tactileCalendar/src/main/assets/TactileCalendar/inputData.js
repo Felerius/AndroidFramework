@@ -1,5 +1,10 @@
 var maxAirbarHeight = 1936;
-var sizeFactor = maxAirbarHeight / svg.attr("height");
+var maxAirbarWidth = 3452;
+//maxAirbarWidth / maxAirbarHeight = 1,78305
+var lastx2=0;
+var lasty2=0
+
+var sizeFactor = maxAirbarWidth / svg.attr("width");
 console.log(sizeFactor);
 
 
@@ -64,14 +69,61 @@ var defaultOptions = {
     cancelable: true
 }
 
-function getInputData(x,y){
+function getInputData(x1,y1,x2,y2,eventType1,eventType2){
     //simulate mouse event
-    x = x/sizeFactor;
-    y = y/sizeFactor;
-    console.log(x + ", " + y);
-    simulate(document.elementFromPoint(x,y),"mouseover", { pointerX: x, pointerY: y });
-    console.log(document.elementFromPoint(x,y));
+    /*x1 = x1/sizeFactor;
+    y1 = y1/sizeFactor;
+    x2 = x2/sizeFactor;
+    y2 = y2/sizeFactor;*/
+    x1 = (maxAirbarWidth - x1)/10;
+    y1 = (maxAirbarHeight - y1)/10;
+    x2 = (maxAirbarWidth - x2)/10;
+    y2 = (maxAirbarHeight - y2)/10;
 
 
+    console.log(x1 + ", " + y1);
+    console.log(x2 + ", " + y2);
+    //simulate(document.elementFromPoint(x,y),"mouseover", { pointerX: x, pointerY: y });
+    //simulate(document.elementFromPoint(x,y),"mouseover", { pointerX: x, pointerY: y });
+
+    console.log(document.elementFromPoint(x1,y1));
+    console.log(eventType1);
+    console.log(eventType2);
+
+    checkEventType(eventType1,x1,y1);
+    //simulate(document.elementFromPoint(x1,y1),"mouseover", { pointerX: x1, pointerY: y1});
+    if (lastx2!=x2 && lasty2!=y2){
+        checkEventType(eventType2,x2,y2);
+        lastx2 = x2;
+        lasty2 = y2;
+    }
+
+}
+
+function checkEventType(eventType,x,y){
+
+    switch(eventType){
+        case 0: simulate(document.elementFromPoint(x,y),"mouseover", { pointerX: x, pointerY: y});break;
+        case 1: simulate(document.elementFromPoint(x,y),"click", { pointerX: x, pointerY: y});break;
+        case 2: simulate(document.elementFromPoint(x,y),"mouseout", { pointerX: x, pointerY: y});break;
+    }
+}
+
+
+function getAllElementsFromPoint(x, y) {
+    var elements = [];
+    var display = [];
+    var item = document.elementFromPoint(x, y);
+    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement) {
+        elements.push(item);
+        display.push(item.style.display);
+        item.style.display = "none";
+        item = document.elementFromPoint(x, y);
+    }
+    // restore display property
+    for (var i = 0; i < elements.length; i++) {
+        elements[i].style.display = display[i];
+    }
+    return elements;
 }
 

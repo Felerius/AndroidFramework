@@ -22,7 +22,7 @@ public class WebAppInterface {
     SVGTransmitter svgTransmitter;
     TextToSpeech tts;
     private SoundPool soundPool;
-    private int sound_c,sound_d, sound_e, sound_f, sound_g, sound_a, sound_b, sound_c5;
+    private int sound_c,sound_d, sound_e, sound_f, sound_g, sound_a, sound_b, sound_c5, sound_cis, sound_dis, sound_fis, sound_gis, sound_ais;
     private int lastToneVal=0;
 
     private long lastTimeStamp;
@@ -48,8 +48,15 @@ public class WebAppInterface {
         sound_f = soundPool.load(mContext,R.raw.f_4,1);
         sound_g = soundPool.load(mContext,R.raw.g_4,1);
         sound_a = soundPool.load(mContext,R.raw.a_4,1);
-        sound_b = soundPool.load(mContext,R.raw.b_4,1);
+        sound_b = soundPool.load(mContext,R.raw.h_4,1);
         sound_c5= soundPool.load(mContext,R.raw.c_5,1);
+        sound_cis = soundPool.load(mContext,R.raw.cis_4,1);
+        sound_dis = soundPool.load(mContext,R.raw.dis_4,1);
+        sound_fis = soundPool.load(mContext,R.raw.fis_4,1);
+        sound_gis = soundPool.load(mContext,R.raw.gis_4,1);
+        sound_ais= soundPool.load(mContext,R.raw.ais_4,1);
+
+
     }
 
     //framework method
@@ -89,6 +96,12 @@ public class WebAppInterface {
             case "a": toneVal = sound_a; break;
             case "b": toneVal = sound_b; break;
             case "c5": toneVal = sound_c5; break;
+            case "cis": toneVal = sound_cis; break;
+            case "dis": toneVal = sound_dis; break;
+            case "fis": toneVal = sound_fis; break;
+            case "gis": toneVal = sound_gis; break;
+            case "ais": toneVal = sound_ais; break;
+
         }
 
         Log.i("Piano",toneVal+"");
