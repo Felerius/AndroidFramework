@@ -2,7 +2,11 @@ var maxAirbarHeight = 1936;
 var maxAirbarWidth = 3452;
 //maxAirbarWidth / maxAirbarHeight = 1,78305
 var lastx2=0;
-var lasty2=0
+var lasty2=0;
+var cursorX1;
+var cursorY1;
+var cursorX2;
+var cursorY2;
 
 var sizeFactor = maxAirbarWidth / svg.attr("width");
 console.log(sizeFactor);
@@ -97,6 +101,12 @@ function getInputData(x1,y1,x2,y2,eventType1,eventType2){
         lastx2 = x2;
         lasty2 = y2;
     }
+
+    cursorX1 = x1;
+    cursorY1 = y1;
+    cursorX2 = x2;
+    cursorY2 = y2;
+
 
 }
 

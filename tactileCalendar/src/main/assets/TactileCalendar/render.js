@@ -4,15 +4,18 @@
 //TODO zeitumstellung
 //TODO no am/pm unless first enter
 
+
 var timeScale = d3.scaleLinear()
 
 var dayScale = d3.scaleLinear()
 
 var svg = d3.select("body")
 .append("svg")
-.attr("width", width)
-.attr("height", height)
-.attr("id","svg");
+.attr("width", paperWidth)
+.attr("height", paperHeight)
+.attr("id","svg")
+.attr("viewBox", "0 0 " + width + " " + height)
+.attr("preserveAspectRatio", "xMinYMin meet");
 
 var defs = svg.append("defs")
 
@@ -48,10 +51,6 @@ defs.append("pattern")
 		.attr("stroke-width", 2);
 
 
-var mainGroup = svg.append("g")
-.attr("id","mainGroup")
-.attr('transform', "translate(0,30)scale(0.15)");
-
 
 
 function renderEvents(events) {
@@ -86,7 +85,7 @@ function renderEvents(events) {
 		days.push(new Date(day))
 	}
 
-	var dayBoxes = d3.select("#mainGroup").selectAll(".dayBox")
+	var dayBoxes = svg.selectAll(".dayBox")
 	.data(days)
 	.enter()
 	.append("rect")
@@ -105,7 +104,7 @@ function renderEvents(events) {
 
     dayBoxes.attrs(dayBoxAttrs)
 
-	var eventBoxes = d3.select("#mainGroup").selectAll(".eventBox")
+	var eventBoxes = svg.selectAll(".eventBox")
 	//filter out allday events
 	.data(events.filter(function(e){return typeof e.start.dateTime !== "undefined"}))
 	.enter()
@@ -131,7 +130,7 @@ function renderEvents(events) {
 	.on("mouseout", cancelSpeech);
 
 	//Add hour marks
-	var dayGroups = d3.select("#mainGroup").selectAll("g")
+	var dayGroups = svg.selectAll("g")
 	.data(days)
 	.enter()
 	.append("g")

@@ -39,4 +39,5 @@ dependencies {
     }
     compile project(":bluetoothlib")
 
+    compile project(path: ':webapplib')
 }

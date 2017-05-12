@@ -20,8 +20,8 @@ defs.append("pattern")
 	.attr("id", "keyPlateau")
 	.attr("x", 0)
 	.attr("y", 0)
-	.attr("width", 2)
-	.attr("height", keyHeight)
+	.attr("width", keyWidth)
+	.attr("height", 2)
 	.attr("patternUnits", "userSpaceOnUse")
 	.append("line")
 		.attr("x1", 0)
@@ -29,6 +29,21 @@ defs.append("pattern")
 		.attr("x2", 20)
 		.attr("y2", 0)
 		.attr("stroke", "black");
+
+defs.append("pattern")
+	.attr("id", "playTonePlateau")
+	.attr("x", 0)
+	.attr("y", 0)
+	.attr("width", 100)
+	.attr("height", 10)
+	.attr("patternUnits", "userSpaceOnUse")
+	.append("line")
+		.attr("x1", 0)
+		.attr("y1", 0)
+		.attr("x2", 20)
+		.attr("y2", 0)
+		.attr("stroke", "black");
+
 
 
 
@@ -82,10 +97,9 @@ enter().append("circle")
 
 svg.append("rect")
 .attr("x", 100)
-.attr("y",100)
-.attr("width",100)
-.attr("height",100)
-.on("click",playTone);
+.attr("y",0)
+.on("click",playTone)
+.attrs(playToneAttrs);
 
 
 

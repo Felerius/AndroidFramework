@@ -8,6 +8,8 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.widget.Toast;
 
+import com.hci.bachelorproject.webapplib.JSAppInterface;
+
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
@@ -17,28 +19,16 @@ import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
  * Created by Julius on 01.03.2017.
  */
 
-public class WebAppInterface {
+public class WebAppInterface extends JSAppInterface {
     Context mContext;
-    SVGTransmitter svgTransmitter;
-    TextToSpeech tts;
     private SoundPool soundPool;
     private int sound_c,sound_d, sound_e, sound_f, sound_g, sound_a, sound_b, sound_c5, sound_cis, sound_dis, sound_fis, sound_gis, sound_ais;
-    private int lastToneVal=0;
-
+    private int lastToneVal = -1;
     private long lastTimeStamp;
 
-    WebView webView;
     /** Instantiate the interface and set the context */
     WebAppInterface(Context c, WebView webView) {
-        mContext = c;
-        svgTransmitter = new SVGTransmitter(c, webView);
-        this.webView = webView;
-        this.tts = new TextToSpeech(c, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int i) {
-
-            }
-        });
+        super(c,webView);
 
         lastTimeStamp = System.currentTimeMillis();
         soundPool = new SoundPool.Builder().setMaxStreams(5).build();
@@ -57,29 +47,6 @@ public class WebAppInterface {
         sound_ais= soundPool.load(mContext,R.raw.ais_4,1);
 
 
-    }
-
-    //framework method
-    @JavascriptInterface
-    public void sendSVGToLaserPlotter(String svgString, String printJobUUID){
-        Log.i("WebAppInterface", "Sending to plotter " + svgString);
-        Toast.makeText(mContext, "Printing SVG", Toast.LENGTH_SHORT).show();
-        byte[] uuidBytes = printJobUUID.getBytes();
-        byte[] svgBytes = svgString.getBytes();
-        int length = svgBytes.length;
-        ByteBuffer bb = ByteBuffer.wrap(new byte[length + 4 + 36]);
-        bb.put(uuidBytes);
-        bb.putInt(length);
-        bb.put(svgBytes);
-        byte[] byteArray = bb.array();
-        //svgTransmitter.sendToLaserPlotter(versionNr+"");
-        svgTransmitter.sendToLaserPlotter(byteArray);
-    }
-
-    //framework method
-    @JavascriptInterface
-    public void speak(String text){
-        tts.speak(text,TextToSpeech.QUEUE_FLUSH,null,text);
     }
 
 
@@ -104,7 +71,6 @@ public class WebAppInterface {
 
         }
 
-        Log.i("Piano",toneVal+"");
         long currentTimeStamp = System.currentTimeMillis();
         //if (toneVal!=lastToneVal || currentTimeStamp - lastTimeStamp>150) {
             soundPool.play(toneVal, 1, 1, 0, 0, 1);

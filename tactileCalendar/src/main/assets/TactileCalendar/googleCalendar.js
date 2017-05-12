@@ -1,4 +1,7 @@
 
+
+function getEventsFromAndroid(){
+
   console.log("requesting events from google api");
   var request = JSON.parse(Android.getGoogleCalendarEvents());
   console.log(request["events"].length)
@@ -19,3 +22,6 @@
         newEvents.push(event);
       }
       renderEvents(newEvents);
+}
+
+getEventsFromAndroid();

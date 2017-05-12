@@ -1,17 +1,12 @@
+var lastEvent;
+
+
 weekDays = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
 hourMarks = ["12AM", "1AM", "2AM", "3AM", "4AM", "5AM", "6AM", "7AM", "8AM", "9AM", "10AM", "11AM",
 			 "12PM", "1PM", "2PM", "3PM", "4PM", "5PM", "6PM", "7PM", "8PM", "9PM", "10PM", "11PM",]
 
 var lastDay
-var talkingSpeed = 1.5
 
-var commands = {
-	'create event *summary from here': startEventCreation,
-	'to here': endEventCreation,
-	'test' : function(){console.log("test");}
-};
-annyang.addCommands(commands);
-annyang.start();
 
 function timeInText(date) {
   var text = ""
@@ -56,12 +51,15 @@ function speak(text) {
 }
 
 function cancelSpeech() {
-	window.speechSynthesis.cancel();
+    lastEvent = null;
 }
 
 function handleMouseOverEvent(e, i) {
-  	speak(textFor(e));
-	console.log("mouse over event " + e);
+  	if (e!= lastEvent){
+        speak(textFor(e));
+        console.log("mouse over event " + e);
+        lastEvent = e;
+  	}
 }
 
 function handleMouseOverDay(e, i) {
@@ -92,13 +90,21 @@ var curEvent = {}
 
 function getCursorTime() {
 	console.log("cursorX:")
-	console.log(cursorX)
+	console.log(cursorX1)
 	console.log("cursorY:")
-	console.log(cursorY)
+	console.log(cursorY1)
 	cursorY -= 20
-	var cursorDay = new Date(dayScale.invert(cursorX)*8.64e7)
+	var transformFactorX = width/paperWidth;
+	var transformFactorY = height/paperHeight;
+
+	var scaledX1 = cursorX1 * transformFactorX;
+	var scaledY1 = cursorY1 * transformFactorY;
+    console.log(scaledX1);
+    console.log(scaledY1);
+
+	var cursorDay = new Date(dayScale.invert(scaledX1)*8.64e7)
 	cursorDay.setHours(0,0,0,0)
-	var cursorDate = new Date(cursorDay.getTime()+timeScale.invert(cursorY)*60000)
+	var cursorDate = new Date(cursorDay.getTime()+timeScale.invert(scaledY1)*60000)
 	console.log(cursorDate.toISOString())
 
 	return cursorDate
@@ -118,6 +124,7 @@ function startEventCreation(summary) {
 	curEvent['start'] = {}
 	curEvent['start']['dateTime'] = roundMinutes(startTime).toISOString()
 	curEvent['start']['timeZone'] = 'Europe/Berlin'
+
 }
 
 function endEventCreation() {
@@ -139,10 +146,27 @@ function endEventCreation() {
 function handleSpeech(speechInput){
     speechInput = speechInput.toLowerCase();
     console.log("received " + speechInput);
-    var patt = new RegExp("create event * from here");
+    /*var patt = new RegExp("create event * from here");
     var pattFromHere = /create[\s]*event/i
     var pattToHere = /to[\s]*here/i
     var pattTest = new RegExp("test");
+*/
+
+    if (speechInput.includes("new") && speechInput.includes("event")){
+        fsm.handle("newEvent");
+    } else if (speechInput.includes("cancel")){
+        fsm.handle("cancel");
+    } else if (speechInput.includes("back")){
+        fsm.handle("back");
+    } else if (speechInput.includes("select")){
+        var time = getCursorTime();
+        fsm.handle("selectingTime", time);
+    } else if (speechInput.includes("create")){
+        fsm.handle("createEvent");
+    } else {
+        fsm.handle("eventNameSet", speechInput);
+    }
+    /*
     if (pattFromHere.test(speechInput)){
         var substring = speechInput.substring(speechInput.indexOf("event") + 5);
         console.log(substring);
@@ -153,5 +177,5 @@ function handleSpeech(speechInput){
         console.log(speechInput.match("Test"));
     } else {
         console.log(speechInput);
-    }
+    }*/
 }

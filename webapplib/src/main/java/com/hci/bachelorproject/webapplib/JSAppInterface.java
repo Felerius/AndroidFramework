@@ -26,7 +26,7 @@ public class JSAppInterface {
 
     WebView webView;
     /** Instantiate the interface and set the context */
-    JSAppInterface(Context c, WebView webView) {
+    public JSAppInterface(Context c, WebView webView) {
         mContext = c;
         svgTransmitter = new SVGTransmitter(c, webView);
         this.webView = webView;
@@ -47,8 +47,7 @@ public class JSAppInterface {
         byte[] uuidBytes = printJobUUID.getBytes();
         byte[] svgBytes = svgString.getBytes();
         int length = svgBytes.length;
-        Log.i("SVG Send", "length " + length);
-        ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+        ByteBuffer bb = ByteBuffer.wrap(new byte[length + 4 + 36]);
         bb.put(uuidBytes);
         bb.putInt(length);
         bb.put(svgBytes);

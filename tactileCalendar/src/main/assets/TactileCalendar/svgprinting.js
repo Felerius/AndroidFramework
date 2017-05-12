@@ -27,9 +27,10 @@ function getSVGDiff(){
 	//get svg source.
     traverseDOM(svg);
     svgVersionNr+=1;
-    removeVersionAttr(svg);
+    removeItemsTemporary();
+    //removeVersionAttr(svg);
 	var serializer = new XMLSerializer();
-
+    restoreDOM();
 	var source = serializer.serializeToString(svg);
 
 	//add name spaces.
@@ -45,8 +46,8 @@ function getSVGDiff(){
 
 
 function traverseDOM(element){
-    if (element.getAttribute('data-version')==null){
-        element.setAttribute('data-version', svgVersionNr);
+    if (element.getAttributeNS(linepodNS, 'version')==null){
+        element.setAttributeNS(linepodNS, 'version', svgVersionNr);
     }
     console.log(element	);
     var children = element.childNodes;
@@ -54,8 +55,8 @@ function traverseDOM(element){
     for (var i =0; i <children.length; i++){
         var child = children[i];
         traverseDOM(child);
-    	console.log("version " + child.getAttribute("data-version"));
-        if (child.getAttribute("data-version")!= svgVersionNr){
+    	console.log("version " + child.getAttributeNS(linepodNS,"version"));
+        if (child.getAttributeNS(linepodNS, "version")!= svgVersionNr){
 
         	if (element.getAttribute("id")==null){
     			var newParentId = generateUUID();
@@ -75,8 +76,8 @@ function traverseDOM(element){
 function removeVersionAttr(element){
 
     var children = element.childNodes;
-    if (element.hasAttribute("data-version")){
-        element.removeAttribute("data-version");
+    if (element.hasAttributeNS(linepodNS, "version")){
+        element.removeAttributeNS(linepodNS, "version");
     }
     for (var i =0; i <children.length; i++){
         var child = children[i];

@@ -46,11 +46,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import android.view.View;
-import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -63,8 +60,6 @@ import java.util.Locale;
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
 
-import static com.hci.bachelorproject.tactileCalendar.GoogleCalendarActivity.REQUEST_PERMISSION_ACCESS_COARSE_LOCATION;
-
 public class GoogleCalendarActivity extends Activity
         implements EasyPermissions.PermissionCallbacks, SensorEventListener {
     GoogleAccountCredential mCredential;
@@ -72,7 +67,7 @@ public class GoogleCalendarActivity extends Activity
     private Button mCallApiButton;
     ProgressDialog mProgress;
     WebView webView;
-    WebAppInterface webAppInterface;
+    CalendarWebAppInterface webAppInterface;
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
     static final int REQUEST_GOOGLE_PLAY_SERVICES = 1002;
@@ -117,6 +112,7 @@ public class GoogleCalendarActivity extends Activity
         mProgress = new ProgressDialog(this);
         mProgress.setMessage("Calling Google Calendar API ...");
 
+
         webView = (WebView) findViewById(R.id.webView);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
@@ -150,7 +146,7 @@ public class GoogleCalendarActivity extends Activity
     private void checkPermission(String permission, int requestCode) {
         if (requestCode == REQUEST_PERMISSION_ACCESS_COARSE_LOCATION){
             if (ContextCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED){
-                webAppInterface = new WebAppInterface(getApplicationContext(),webView);
+                webAppInterface = new CalendarWebAppInterface(getApplicationContext(),webView, mCredential);
                 webView.addJavascriptInterface(webAppInterface, "Android");
             }
         }
@@ -383,7 +379,7 @@ public class GoogleCalendarActivity extends Activity
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
                 "listening");
         try {startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);

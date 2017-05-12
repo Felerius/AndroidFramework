@@ -27,7 +27,8 @@ function getSVGDiff(){
 	//get svg source.
     traverseDOM(svg);
     svgVersionNr+=1;
-    removeVersionAttr(svg);
+    //removeVersionAttr(svg);
+	removeItemsTemporary();
 	var serializer = new XMLSerializer();
 
 	var source = serializer.serializeToString(svg);
@@ -71,7 +72,7 @@ function traverseDOM(element){
     }
 
 }
-
+/*
 function removeVersionAttr(element){
 
     var children = element.childNodes;
@@ -83,7 +84,7 @@ function removeVersionAttr(element){
         removeVersionAttr(child);
     }
 }
-
+*/
 //this function and restoreDOM are needed to get the diff between print-jobs.
 //only svg elements are printed that were added after the last print job.
 
