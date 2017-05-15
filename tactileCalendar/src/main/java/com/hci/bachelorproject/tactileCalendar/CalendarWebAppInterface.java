@@ -1,6 +1,7 @@
 package com.hci.bachelorproject.tactileCalendar;
 
 import android.content.Context;
+import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
@@ -38,11 +39,38 @@ public class CalendarWebAppInterface extends JSAppInterface {
     }
 
     List<Event>  googleCalendarEvents;
-    WebView webView;
     /** Instantiate the interface and set the context */
-    CalendarWebAppInterface(Context c, WebView webView, GoogleAccountCredential mCredential) {
-        super(c,webView);
-        this.mCredential = mCredential;;
+    public CalendarWebAppInterface(Context c, WebView webView, GoogleAccountCredential mCredential) {
+        super(c,webView,false);
+        this.mCredential = mCredential;
+
+    }
+
+    @Override
+    protected void setupTTS(){
+        this.tts = new TextToSpeech(mContext, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int i) {
+                /*tts.speak("Welcome to your tactile calendar. This app supports speech recognition that you can start by shaking your phone." +
+                                "      + \"If you want you can now print your current Google Calendar by saying 'print'. Double check that your Linepod is turned on, a piece of swell paper is inserted " +
+                                "      \"and that the lid is closed if you want to print. Also you can say 'options' or 'help' at anytime to hear your current options. "
+                        , TextToSpeech.QUEUE_ADD,null);*/
+            }
+        });
+    }
+
+    @JavascriptInterface
+    public void startSVGTransmitter(boolean instantPrint){
+        this.svgTransmitter = new SVGTransmitter(mContext, webView);
+        if (instantPrint){
+            webView.post((new Runnable() {
+                @Override
+                public void run() {
+                    webView.loadUrl("javascript:printSVG();");
+                }
+            }));
+
+        }
     }
 
     //google calendar method
@@ -94,8 +122,13 @@ public class CalendarWebAppInterface extends JSAppInterface {
             e.printStackTrace();
         }
         System.out.printf("Event created: %s\n", event.getHtmlLink());
+        webView.post((new Runnable() {
+            @Override
+            public void run() {
+                webView.loadUrl("javascript:getEventsFromAndroid();");
+            }
+        }));
 
-        webView.loadUrl("javascript:getEventsFromAndroid();");
     }
 
     //google calendar method

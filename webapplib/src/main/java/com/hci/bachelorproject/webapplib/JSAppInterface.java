@@ -1,7 +1,6 @@
 package com.hci.bachelorproject.webapplib;
 
 import android.content.Context;
-import android.media.SoundPool;
 import android.os.Build;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
@@ -18,25 +17,32 @@ import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
  */
 
 public class JSAppInterface {
-    Context mContext;
-    SVGTransmitter svgTransmitter;
-    TextToSpeech tts;
+    protected Context mContext;
+    protected SVGTransmitter svgTransmitter;
+    protected TextToSpeech tts;
 
 
 
-    WebView webView;
+    protected WebView webView;
     /** Instantiate the interface and set the context */
-    public JSAppInterface(Context c, WebView webView) {
+    public JSAppInterface(Context c, WebView webView, boolean instantConnect) {
         mContext = c;
-        svgTransmitter = new SVGTransmitter(c, webView);
+        if (instantConnect){
+            svgTransmitter = new SVGTransmitter(c, webView);
+        }
         this.webView = webView;
-        this.tts = new TextToSpeech(c, new TextToSpeech.OnInitListener() {
+        setupTTS();
+
+    }
+
+
+    protected void setupTTS(){
+        this.tts = new TextToSpeech(mContext, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int i) {
 
             }
         });
-
     }
 
     //framework method

@@ -146,11 +146,7 @@ function endEventCreation() {
 function handleSpeech(speechInput){
     speechInput = speechInput.toLowerCase();
     console.log("received " + speechInput);
-    /*var patt = new RegExp("create event * from here");
-    var pattFromHere = /create[\s]*event/i
-    var pattToHere = /to[\s]*here/i
-    var pattTest = new RegExp("test");
-*/
+
 
     if (speechInput.includes("new") && speechInput.includes("event")){
         fsm.handle("newEvent");
@@ -163,19 +159,12 @@ function handleSpeech(speechInput){
         fsm.handle("selectingTime", time);
     } else if (speechInput.includes("create")){
         fsm.handle("createEvent");
+    } else if (speechInput.includes("options") || speechInput.includes("help") ){
+        fsm.handle("options");
+    } else if (speechInput.includes("print")){
+        fsm.handle("print");
     } else {
         fsm.handle("eventNameSet", speechInput);
     }
-    /*
-    if (pattFromHere.test(speechInput)){
-        var substring = speechInput.substring(speechInput.indexOf("event") + 5);
-        console.log(substring);
-        startEventCreation(substring);
-    } else if(pattToHere.test(speechInput)){
-        endEventCreation();
-    } else if(pattTest.test(speechInput)){
-        console.log(speechInput.match("Test"));
-    } else {
-        console.log(speechInput);
-    }*/
+
 }

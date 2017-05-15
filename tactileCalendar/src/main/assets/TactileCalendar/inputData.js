@@ -137,3 +137,9 @@ function getAllElementsFromPoint(x, y) {
     return elements;
 }
 
+function printStatusChanged(status){
+    switch(status){
+        case 0: fsm.handle("printed");
+
+    }
+}

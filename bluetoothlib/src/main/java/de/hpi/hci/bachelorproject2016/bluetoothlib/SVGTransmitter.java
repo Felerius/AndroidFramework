@@ -26,7 +26,12 @@ public class SVGTransmitter {
     TextToSpeech tts;
     PrinterConnector.Mode connectionMode = PrinterConnector.Mode.BLUETOOTH;
     String utteranceId = "utteranceId";
-    WebView webView;
+
+    public WebView getWebView() {
+        return webView;
+    }
+
+    public WebView webView;
     String svgData="";
     byte[] svgBytes;
     Context context;
@@ -119,7 +124,7 @@ public class SVGTransmitter {
                         webView.post(sendInputDataOnUiThread);
                         break;
                     case 1:
-                        int status = Integer.valueOf(array[1]);
+                        final int status = Integer.valueOf(array[1]);
                         Log.d("Status", status + "");
                         Log.d("UUID", "received uuid");
                         byte [] subArray = Arrays.copyOfRange(c, 8, 44);
@@ -133,6 +138,13 @@ public class SVGTransmitter {
                                 } else {
                                     tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
                                 }
+                                webView.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        webView.loadUrl("javascript:printStatusChanged(" + status + ");");
+                                    }
+                                });
+
                         }
                 }
 
