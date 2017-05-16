@@ -67,6 +67,7 @@ public class GoogleCalendarActivity extends Activity
     private Button mCallApiButton;
     ProgressDialog mProgress;
     WebView webView;
+    com.google.api.services.calendar.Calendar mService = null;
     CalendarWebAppInterface webAppInterface;
     static final int REQUEST_ACCOUNT_PICKER = 1000;
     static final int REQUEST_AUTHORIZATION = 1001;
@@ -75,7 +76,7 @@ public class GoogleCalendarActivity extends Activity
     static final int REQUEST_PERMISSION_ACCESS_COARSE_LOCATION = 1004;
     private static final String BUTTON_TEXT = "Call Google Calendar API";
     private static final String PREF_ACCOUNT_NAME = "accountName";
-    private static final String[] SCOPES = { CalendarScopes.CALENDAR_READONLY };
+    private static final String[] SCOPES = { CalendarScopes.CALENDAR };
 
 
     //Shake event handling
@@ -146,7 +147,7 @@ public class GoogleCalendarActivity extends Activity
     private void checkPermission(String permission, int requestCode) {
         if (requestCode == REQUEST_PERMISSION_ACCESS_COARSE_LOCATION){
             if (ContextCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED){
-                webAppInterface = new CalendarWebAppInterface(getApplicationContext(),webView, mCredential);
+                webAppInterface = new CalendarWebAppInterface(getApplicationContext(),webView, mService);
                 webView.addJavascriptInterface(webAppInterface, "Android");
             }
         }
@@ -419,7 +420,7 @@ public class GoogleCalendarActivity extends Activity
      * Placing the API calls in their own task ensures the UI stays responsive.
      */
     private class MakeRequestTask extends AsyncTask<Void, Void, List<String>> {
-        private com.google.api.services.calendar.Calendar mService = null;
+
         private Exception mLastError = null;
 
         MakeRequestTask(GoogleAccountCredential credential) {
@@ -427,8 +428,10 @@ public class GoogleCalendarActivity extends Activity
             JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
             mService = new com.google.api.services.calendar.Calendar.Builder(
                     transport, jsonFactory, credential)
-                    .setApplicationName("Google Calendar API Android Quickstart")
                     .build();
+            if (webAppInterface!= null) {
+                webAppInterface.setmService(mService);
+            }
         }
 
         /**

@@ -163,8 +163,11 @@ function handleSpeech(speechInput){
         fsm.handle("options");
     } else if (speechInput.includes("print")){
         fsm.handle("print");
-    } else {
-        fsm.handle("eventNameSet", speechInput);
+    } else if (speechInput.includes("test")){
+          Android.createEvent("test",new Date().toISOString(), new Date().toISOString());
+      }
+     else {
+        fsm.handle("otherInput", speechInput);
     }
 
 }

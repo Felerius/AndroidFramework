@@ -1,6 +1,7 @@
 package com.hci.bachelorproject.tactileCalendar;
 
 import android.content.Context;
+import android.net.ParseException;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
@@ -23,6 +24,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
@@ -33,16 +38,20 @@ import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
 
 public class CalendarWebAppInterface extends JSAppInterface {
 
-    GoogleAccountCredential mCredential;
+    public void setmService(com.google.api.services.calendar.Calendar mService) {
+        this.mService = mService;
+    }
+
+    com.google.api.services.calendar.Calendar mService = null;
     public void setGoogleCalendarEvents(List<Event> googleCalendarEvents) {
         this.googleCalendarEvents = googleCalendarEvents;
     }
 
     List<Event>  googleCalendarEvents;
     /** Instantiate the interface and set the context */
-    public CalendarWebAppInterface(Context c, WebView webView, GoogleAccountCredential mCredential) {
+    public CalendarWebAppInterface(Context c, WebView webView, com.google.api.services.calendar.Calendar service) {
         super(c,webView,false);
-        this.mCredential = mCredential;
+        this.mService = service;
 
     }
 
@@ -51,17 +60,19 @@ public class CalendarWebAppInterface extends JSAppInterface {
         this.tts = new TextToSpeech(mContext, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int i) {
-                /*tts.speak("Welcome to your tactile calendar. This app supports speech recognition that you can start by shaking your phone." +
+                tts.speak("Welcome to your tactile calendar. This app supports speech recognition that you can start by shaking your phone." +
                                 "      + \"If you want you can now print your current Google Calendar by saying 'print'. Double check that your Linepod is turned on, a piece of swell paper is inserted " +
-                                "      \"and that the lid is closed if you want to print. Also you can say 'options' or 'help' at anytime to hear your current options. "
-                        , TextToSpeech.QUEUE_ADD,null);*/
+                                "      \"and that the lid is closed if you want to print. Also you can say 'options' or 'help' at anytime if you're stuck and don't know what to do. "
+                        , TextToSpeech.QUEUE_ADD,null);
             }
         });
     }
 
     @JavascriptInterface
     public void startSVGTransmitter(boolean instantPrint){
-        this.svgTransmitter = new SVGTransmitter(mContext, webView);
+        if (this.svgTransmitter==null){
+            this.svgTransmitter = new SVGTransmitter(mContext, webView);
+        }
         if (instantPrint){
             webView.post((new Runnable() {
                 @Override
@@ -92,12 +103,9 @@ public class CalendarWebAppInterface extends JSAppInterface {
 
     @JavascriptInterface
     public void createEvent(String name, String startTime, String endTime){
-        HttpTransport transport = AndroidHttp.newCompatibleTransport();
-        JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
-        com.google.api.services.calendar.Calendar service = new com.google.api.services.calendar.Calendar.Builder(
-                transport, jsonFactory, mCredential)
-                .setApplicationName("R_D_Location Callendar")
-                .build();
+
+        Log.d("interface", "start "+ startTime);
+        Log.d("interface", "end "+ endTime);
 
 
         Event event = new Event().setSummary(name);
@@ -117,7 +125,14 @@ public class CalendarWebAppInterface extends JSAppInterface {
 
         String calendarId = "primary";
         try {
-            event = service.events().insert(calendarId, event).execute();
+            Log.i("Calendar access", "" + mService.calendarList().get(calendarId).execute().getAccessRole());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            event = mService.events().insert(calendarId, event).execute();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -126,6 +141,8 @@ public class CalendarWebAppInterface extends JSAppInterface {
             @Override
             public void run() {
                 webView.loadUrl("javascript:getEventsFromAndroid();");
+                //webView.loadUrl("javascript:printSVG();");
+                startSVGTransmitter(true);
             }
         }));
 
