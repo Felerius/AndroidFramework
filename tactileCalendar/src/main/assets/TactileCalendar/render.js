@@ -9,11 +9,17 @@ var timeScale = d3.scaleLinear()
 
 var dayScale = d3.scaleLinear()
 
-var svg = d3.select("body")
+var svgTop = d3.select("body")
 .append("svg")
 .attr("width", paperWidth)
-.attr("height", paperHeight)
+.attr("height", paperHeight);
+
+var svg = svgTop
+.append("svg")
+.attr("width", paperWidth)
+.attr("height", paperHeight-paperA4Yoffset)
 .attr("id","svg")
+.attr("y",paperA4Yoffset)
 .attr("viewBox", "0 0 " + width + " " + height)
 .attr("preserveAspectRatio", "xMinYMin meet");
 
@@ -53,56 +59,63 @@ defs.append("pattern")
 
 
 
-function renderEvents(events) {
-  //gets called from googleCalendar.js when events are obtained from API
 
-  //add "level" attribute to each event for placing overlapping events
-  generateXLevels(events)
+//gets called from googleCalendar.js when events are obtained from API
+function renderEvents(events){
 
-  var minHour = getMinHour(events)
-  var maxHour = getMaxHour(events)
-  var hours = []
-	for(let i = minHour; i<maxHour+1; i++) {
-		hours.push(i)
-	}
 
-	//Y Scale
-	timeScale
-	.domain([minHour*60,maxHour*60]) //Domain in minutes
-	.range([100,height]);
 
-	//X Scale
-	dayScale
-	.domain([daysSinceEpoch(timeMin),daysSinceEpoch(timeMin)+numberOfDays])
-	.range([100,1000]);
+    //add "level" attribute to each event for placing overlapping events
+    generateXLevels(events)
 
-	days = [] //Needed for placing of seperator lines
+    var minHour = getMinHour(events)
+    var maxHour = getMaxHour(events)
+    var hours = []
+    for(let i = minHour; i<maxHour+1; i++) {
+        hours.push(i)
+    }
 
-	//-1 so that seperator line is on left side of day
-	for(i = -1; i <= numberOfDays - 1; ++i) {
-		day = new Date(timeMin)
-		day.setDate(day.getDate() + i)   
-		days.push(new Date(day))
-	}
+    //Y Scale
+    timeScale
+    .domain([minHour*60,maxHour*60]) //Domain in minutes
+    .range([100,height]);
 
-	var dayBoxes = svg.selectAll(".dayBox")
-	.data(days)
-	.enter()
-	.append("rect")
-	.attr("class", "dayBox")
-	.attr("x", function(e) {
-		var xDiffPerDay = dayScale(daysSinceEpoch(days[1]))-dayScale(daysSinceEpoch(days[0]))
-		return dayScale(daysSinceEpoch(e)) + (xDiffPerDay/2) + 10
-	})
-	.attr("width", function(e) {
-		return dayScale(daysSinceEpoch(days[1]))-dayScale(daysSinceEpoch(days[0]))
-	})
-	.attr("y", 0)
-	.attr("height", height)
-	.on("mouseover", handleMouseOverDay)
-	.on("mouseout", cancelSpeech)
+    //X Scale
+    dayScale
+    .domain([daysSinceEpoch(timeMin),daysSinceEpoch(timeMin)+numberOfDays])
+    .range([100,1000]);
+
+
+
+    days = [] //Needed for placing of seperator lines
+
+    //-1 so that seperator line is on left side of day
+    for(i = -1; i <= numberOfDays - 1; ++i) {
+        day = new Date(timeMin)
+        day.setDate(day.getDate() + i)
+        days.push(new Date(day))
+    }
+
+    var dayBoxes = svg.selectAll(".dayBox")
+    .data(days)
+    .enter()
+    .append("rect")
+    .attr("class", "dayBox")
+    .attr("x", function(e) {
+        var xDiffPerDay = dayScale(daysSinceEpoch(days[1]))-dayScale(daysSinceEpoch(days[0]))
+        return dayScale(daysSinceEpoch(e)) + (xDiffPerDay/2) + 10
+    })
+    .attr("width", function(e) {
+        console.log("rendered day box attribute x");
+        return dayScale(daysSinceEpoch(days[1]))-dayScale(daysSinceEpoch(days[0]))
+    })
+    .attr("y", 0)
+    .attr("height", height)
+    .on("mouseover", handleMouseOverDay)
+    .on("mouseout", cancelSpeech)
 
     dayBoxes.attrs(dayBoxAttrs)
+
 
 	var eventBoxes = svg.selectAll(".eventBox")
 	//filter out allday events

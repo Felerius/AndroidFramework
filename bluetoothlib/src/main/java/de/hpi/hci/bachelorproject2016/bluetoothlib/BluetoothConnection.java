@@ -6,9 +6,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
@@ -93,10 +97,13 @@ public class BluetoothConnection extends PrinterConnection{
                     Log.d("Thread", "trying to connect");
                     socket.connect();
                    
-                    Log.d("Thread", "conect finsished");
+                    Log.d("Thread", "connect finished");
                     outputStream= socket.getOutputStream();
                     inputStream= socket.getInputStream();
                     Log.d(TAG, "run: set up io");
+                    Log.d("Inputstream", "" + inputStream.available() + " " + inputStream.toString());
+                    Log.d("Outputstream", "" + outputStream.toString() );
+
                     isConnected=true;
                     startListener();
                     if(cb!=null)cb.connectionEstablished();
@@ -151,7 +158,12 @@ public class BluetoothConnection extends PrinterConnection{
 
 
     public void tearDown(){
-        context.unregisterReceiver(mReceiver);
+        try{
+
+            context.unregisterReceiver(mReceiver);
+        } catch (IllegalArgumentException e){
+            Log.d("BroadcastReceiver", "receiver not registered");
+        }
         isConnected=false;
         if(socket.isConnected()){
             try{
@@ -195,4 +207,9 @@ public class BluetoothConnection extends PrinterConnection{
     public boolean isConnected() {
         return isConnected;
     }
+
+
+
+
+
 }

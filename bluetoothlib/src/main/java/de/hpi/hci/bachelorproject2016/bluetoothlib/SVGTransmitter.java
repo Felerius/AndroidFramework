@@ -22,6 +22,10 @@ import static android.content.ContentValues.TAG;
  */
 
 public class SVGTransmitter {
+    public PrinterConnector getPrinterConnector() {
+        return printerConnector;
+    }
+
     PrinterConnector printerConnector;
     TextToSpeech tts;
     PrinterConnector.Mode connectionMode = PrinterConnector.Mode.BLUETOOTH;
@@ -50,18 +54,18 @@ public class SVGTransmitter {
     public SVGTransmitter(Context context, WebView webView){
         this.webView = webView;
         this.context = context;
-        initPrinterConnector();
         initTTS(context);
+        initPrinterConnector();
     }
 
-    private void initTTS(Context context){
+    private void initTTS(final Context context){
         tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int i) {
-
+                speak(context.getString(R.string.connecting_laser_plotter));
             }
         });
-        tts.setLanguage(Locale.ENGLISH);
+
     }
 
     private void initPrinterConnector(){
@@ -75,20 +79,20 @@ public class SVGTransmitter {
                 speak(context.getString(R.string.connection_established));
 
                 sendCommands(printerConnector, svgBytes);
+
             }
 
             @Override
             public void connectionLost() {
                 speak(context.getString(R.string.lost_connection));
+                stopPrinterConnector();
 
-                printerConnector = null;
             }
 
             @Override
             public void connectionRefused() {
                 speak(context.getString(R.string.could_not_connect));
-
-                printerConnector = null;
+                stopPrinterConnector();
             }
 
             @Override
@@ -152,6 +156,7 @@ public class SVGTransmitter {
         };
         printerConnector = new PrinterConnector(connectionMode, context.getString(R.string.bluetooth_device_name), "192.168.42.132", 8090,
                 context, onConnectionCallBack);
+
         printerConnector.initializeConnection();
     }
 
@@ -175,7 +180,8 @@ public class SVGTransmitter {
 
     public void sendToLaserPlotter(byte[] svgBytes) {
         this.svgBytes = svgBytes;
-        if (printerConnector.device == null || printerConnector.getConnection() == null) {
+        if (printerConnector.device == null || printerConnector.getConnection() == null ) {
+
             speak(context.getString(R.string.connecting_laser_plotter));
             printerConnector.initializeConnection();
         } else {
@@ -210,5 +216,12 @@ public class SVGTransmitter {
         Log.d(TAG,"Sending commands " + new String(svgBytes));
         printerConnector.getConnection().sendData(svgBytes);
 
+    }
+
+    public void stopPrinterConnector(){
+        if (printerConnector!= null){
+            printerConnector.stopConnection();
+            printerConnector = null;
+        }
     }
 }

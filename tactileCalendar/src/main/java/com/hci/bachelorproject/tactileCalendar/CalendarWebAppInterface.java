@@ -25,6 +25,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -47,7 +48,8 @@ public class CalendarWebAppInterface extends JSAppInterface {
         this.googleCalendarEvents = googleCalendarEvents;
     }
 
-    List<Event>  googleCalendarEvents;
+    List<Event> googleCalendarEvents;
+    List<Event> newEvents;
     /** Instantiate the interface and set the context */
     public CalendarWebAppInterface(Context c, WebView webView, com.google.api.services.calendar.Calendar service) {
         super(c,webView,false);
@@ -60,18 +62,34 @@ public class CalendarWebAppInterface extends JSAppInterface {
         this.tts = new TextToSpeech(mContext, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int i) {
-                tts.speak("Welcome to your tactile calendar. This app supports speech recognition that you can start by shaking your phone." +
+                /*tts.speak("Welcome to your tactile calendar. This app supports speech recognition that you can start by shaking your phone." +
                                 "      + \"If you want you can now print your current Google Calendar by saying 'print'. Double check that your Linepod is turned on, a piece of swell paper is inserted " +
                                 "      \"and that the lid is closed if you want to print. Also you can say 'options' or 'help' at anytime if you're stuck and don't know what to do. "
-                        , TextToSpeech.QUEUE_ADD,null);
+                        , TextToSpeech.QUEUE_ADD,null);*/
             }
         });
     }
 
     @JavascriptInterface
-    public void startSVGTransmitter(boolean instantPrint){
+    public void startSVGTransmitter(final boolean instantPrint){
+        Log.d("SvgTransmitter", "starting svg transmitter");
         if (this.svgTransmitter==null){
-            this.svgTransmitter = new SVGTransmitter(mContext, webView);
+
+            createNewSVGTransmitter();
+
+        } else {
+            if (this.svgTransmitter.getPrinterConnector()==null){
+                createNewSVGTransmitter();
+
+            } else {
+                if (this.svgTransmitter.getPrinterConnector().getConnection()==null){
+                    createNewSVGTransmitter();
+                } else {
+                    if (!this.svgTransmitter.getPrinterConnector().getConnection().isConnected()){
+                        createNewSVGTransmitter();
+                    }
+                }
+            }
         }
         if (instantPrint){
             webView.post((new Runnable() {
@@ -80,16 +98,35 @@ public class CalendarWebAppInterface extends JSAppInterface {
                     webView.loadUrl("javascript:printSVG();");
                 }
             }));
-
+        } else {
+            webView.post((new Runnable() {
+                @Override
+                public void run() {
+                    webView.loadUrl("javascript:simulateFirstPrint();");
+                }
+            }));
         }
     }
 
-    //google calendar method
-    @JavascriptInterface
-    public String getGoogleCalendarEvents() {
+    private void createNewSVGTransmitter(){
+        Log.d("SVGTransmitter", "creating new svg transmitter");
+        Handler handler = new Handler();
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+
+                if (svgTransmitter!= null) {
+                    svgTransmitter.stopPrinterConnector();
+                }
+                svgTransmitter = new SVGTransmitter(mContext, webView);
+            }
+        });
+    }
+
+    private String eventsToJSON(List<Event> events){
         JSONObject obj = new JSONObject();
         JSONArray jsonArray = new JSONArray();
-        for (Event event: googleCalendarEvents){
+        for (Event event: events){
 
             jsonArray.put(event.toString());
         }
@@ -99,6 +136,19 @@ public class CalendarWebAppInterface extends JSAppInterface {
             e.printStackTrace();
         }
         return obj.toString();
+
+    }
+
+    //google calendar method
+    @JavascriptInterface
+    public String getGoogleCalendarEvents() {
+        Log.d("cal-events", eventsToJSON(googleCalendarEvents));
+        return eventsToJSON(googleCalendarEvents);
+    }
+    @JavascriptInterface
+    public String getNewEvents(){
+        Log.d("new events", eventsToJSON(newEvents));
+        return eventsToJSON(newEvents);
     }
 
     @JavascriptInterface
@@ -136,12 +186,15 @@ public class CalendarWebAppInterface extends JSAppInterface {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        newEvents = new ArrayList<>();
+        newEvents.add(event);
         System.out.printf("Event created: %s\n", event.getHtmlLink());
         webView.post((new Runnable() {
             @Override
             public void run() {
-                webView.loadUrl("javascript:getEventsFromAndroid();");
-                //webView.loadUrl("javascript:printSVG();");
+                webView.loadUrl("javascript:getNewEventsFromAndroid();");
+
                 startSVGTransmitter(true);
             }
         }));

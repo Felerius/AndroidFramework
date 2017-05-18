@@ -1,7 +1,6 @@
 var lastEvent;
 
 
-weekDays = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
 hourMarks = ["12AM", "1AM", "2AM", "3AM", "4AM", "5AM", "6AM", "7AM", "8AM", "9AM", "10AM", "11AM",
 			 "12PM", "1PM", "2PM", "3PM", "4PM", "5PM", "6PM", "7PM", "8PM", "9PM", "10PM", "11PM",]
 
@@ -105,6 +104,15 @@ function getCursorTime() {
 	var cursorDay = new Date(dayScale.invert(scaledX1)*8.64e7)
 	cursorDay.setHours(0,0,0,0)
 	var cursorDate = new Date(cursorDay.getTime()+timeScale.invert(scaledY1)*60000)
+	var minutes = cursorDate.getMinutes();
+	if (minutes < 15) {
+        minutes = 0;
+    } else if (minutes < 45){
+        minutes = 30;
+    } else {
+        minutes = 0;
+    }
+    cursorDate.setMinutes(minutes);
 	console.log(cursorDate.toISOString())
 
 	return cursorDate
@@ -163,8 +171,13 @@ function handleSpeech(speechInput){
         fsm.handle("options");
     } else if (speechInput.includes("print")){
         fsm.handle("print");
+    }  else if (speechInput.includes("simulate")){
+        fsm.handle("simulatePrint");
     } else if (speechInput.includes("test")){
-          Android.createEvent("test",new Date().toISOString(), new Date().toISOString());
+          endDate = new Date();
+          endDate.setHours(endDate.getHours()+2);
+
+          Android.createEvent("test",new Date().toISOString(), endDate.toISOString());
       }
      else {
         fsm.handle("otherInput", speechInput);

@@ -11,6 +11,9 @@ import android.speech.tts.TextToSpeech;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
+import java.lang.reflect.Method;
+import java.util.Set;
+
 import static android.content.ContentValues.TAG;
 
 //creating activity needs to handle permissions (Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -30,6 +33,7 @@ public class PrinterConnector  {
 
     private PrinterConnection connection;
     private BluetoothAdapter adapter;
+    Set<BluetoothDevice> pairedDevices;
     protected boolean isConnected=false;
     private String deviceName;
     private Mode mode;
@@ -50,6 +54,7 @@ public class PrinterConnector  {
         this.context = context;
         this.onConnectionCallBack = onConnectionCallBack;
         adapter = BluetoothAdapter.getDefaultAdapter();
+        //pairedDevices = adapter.getBondedDevices();
 
 
         IntentFilter filter= new IntentFilter(BluetoothDevice.ACTION_FOUND);
@@ -93,6 +98,19 @@ public class PrinterConnector  {
             connection.setOnConnectionCallBack(onConnectionCallBack);
             if(connection!=null)connection.connect();
         } else if (mode == Mode.BLUETOOTH) {
+            Log.d("Bluetooth", "initializing connection");
+            //http://stackoverflow.com/questions/23076641/ble-device-bonding-remove-automatically-in-android
+            // Loop through the Set of paired devices, checking to see
+            // if one of the devices is the device you need to unpair
+            // from. I use the device name, but I'm sure you can find
+            // another way to determine whether or not its your device
+            // -- if you need to. :)
+            /*for (BluetoothDevice bt : pairedDevices) {
+                if (bt.getName().contains(deviceName)) {
+                    Log.d("Bluetooth", "unpairing");
+                    unpairDevice(bt);
+                }
+            }*/
 
             adapter.cancelDiscovery();
             adapter.startDiscovery();
@@ -110,11 +128,25 @@ public class PrinterConnector  {
         if (connection!= null) {
             connection.tearDown();
         }
+
         adapter.cancelDiscovery();
-        context.unregisterReceiver(deviceReceiver);
+        try{
+            context.unregisterReceiver(deviceReceiver);
+        } catch (IllegalArgumentException e){
+
+        }
 
     }
 
+
+
+    // Function to unpair from passed in device
+    private void unpairDevice(BluetoothDevice device) {
+        try {
+            Method m = device.getClass().getMethod("removeBond", (Class[]) null);
+            m.invoke(device, (Object[]) null);
+        } catch (Exception e) { Log.e(TAG, e.getMessage()); }
+    }
 
 
 }

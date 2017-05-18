@@ -72,5 +72,10 @@ public class JSAppInterface {
         }
     }
 
+    public void stopInterface(){
+        if (this.svgTransmitter!=null){
+            this.svgTransmitter.stopPrinterConnector();
+        }
+    }
 
 }

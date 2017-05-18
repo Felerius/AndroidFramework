@@ -30,8 +30,8 @@ function getSVGDiff(){
     removeItemsTemporary();
     //removeVersionAttr(svg);
 	var serializer = new XMLSerializer();
-    restoreDOM();
 	var source = serializer.serializeToString(svg);
+    restoreDOM();
 
 	//add name spaces.
 	if(!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)){
@@ -46,6 +46,8 @@ function getSVGDiff(){
 
 
 function traverseDOM(element){
+
+	removedItems = {};
     if (element.getAttributeNS(linepodNS, 'version')==null){
         element.setAttributeNS(linepodNS, 'version', svgVersionNr);
     }
@@ -54,35 +56,25 @@ function traverseDOM(element){
     console.log(children + children.length);
     for (var i =0; i <children.length; i++){
         var child = children[i];
-        traverseDOM(child);
-    	console.log("version " + child.getAttributeNS(linepodNS,"version"));
-        if (child.getAttributeNS(linepodNS, "version")!= svgVersionNr){
-
-        	if (element.getAttribute("id")==null){
-    			var newParentId = generateUUID();
-    			element.setAttribute("id",newParentId);
-    		}
-    		var id = element.getAttribute("id");
-    		if (removedItems[id]==null){
-    			removedItems[id] = [child];
-    		} else {
-    			removedItems[id].push(child);
-    		}
+        if (child.tagName.toLowerCase() != "defs"){
+            traverseDOM(child);
+            console.log("version " + child.getAttributeNS(linepodNS,"version"));
+            if ((child.getAttributeNS(linepodNS, "version")!= svgVersionNr) && (child.tagName.toLowerCase() != "g") && (child.tagName.toLowerCase() != "svg")){ //(child.getAttributeNS(linepodNS, "version")== 0 ||
+                console.log("element to remove temporary " + child + " parent " + element);
+                if (element.getAttribute("id")==null){
+                    var newParentId = generateUUID();
+                    element.setAttribute("id",newParentId);
+                }
+                var id = element.getAttribute("id");
+                if (removedItems[id]==null){
+                    removedItems[id] = [child];
+                } else {
+                    removedItems[id].push(child);
+                }
+            }
         }
     }
 
-}
-
-function removeVersionAttr(element){
-
-    var children = element.childNodes;
-    if (element.hasAttributeNS(linepodNS, "version")){
-        element.removeAttributeNS(linepodNS, "version");
-    }
-    for (var i =0; i <children.length; i++){
-        var child = children[i];
-        removeVersionAttr(child);
-    }
 }
 
 //this function and restoreDOM are needed to get the diff between print-jobs.
@@ -92,9 +84,13 @@ function removeItemsTemporary(){
 	removedItemsCopy = removedItems;
     removedItems = {}
     for (var elementId in removedItemsCopy){
+
 		if (removedItemsCopy.hasOwnProperty(elementId)) {
 			removedItems[elementId] = [];
 			for (var i=0; i< removedItemsCopy[elementId].length;i++){
+			    console.log("element id " + elementId);
+			    console.log("element " + document.getElementById(elementId));
+
 				removedItems[elementId].push(document.getElementById(elementId).removeChild(removedItemsCopy[elementId][i]));
 			}
 		}
@@ -117,6 +113,20 @@ function restoreDOM(){
 			}
 		}
 	}
+
+}
+
+
+function simulateFirstPrint(){
+    var svg = document.getElementById("svg");
+    traverseDOM(svg); //every node needs attribute version
+    svgVersionNr+=1;
+    source = '<?xml version="1.0" standalone="no"?>\r\n' + "<svg></svg>";
+    console.log(source);
+    var printJobUUID = generateUUID();
+    console.log(printJobUUID);
+    printJobs.push(printJobUUID);
+    Android.sendSVGToLaserPlotter(source, printJobUUID);
 }
 
 

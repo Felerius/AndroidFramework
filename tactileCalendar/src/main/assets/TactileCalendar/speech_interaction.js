@@ -6,6 +6,7 @@ var eventStartTimeFormatted;
 var eventEndTimeFormatted;
 
 var eventNm;
+//initial state should actually be appStarted
 var fsm = new machina.Fsm({
  initialState: 'appStarted',
   states: {
@@ -14,6 +15,10 @@ var fsm = new machina.Fsm({
      print: function() {
        Android.startSVGTransmitter(true);
        this.transition("printing");
+     },
+     simulatePrint: function(){
+       Android.startSVGTransmitter(false);
+       this.transition("idle");
      },
      options: function(){
        this.emit('speech', "Do you want to print your calendar now then say 'print'. Just don't forget to check that your Linepod is turned on, has paper inserted and that it's lid is closed.");
@@ -50,7 +55,11 @@ var fsm = new machina.Fsm({
       },
       otherInput: function(input) {
            notUnderstood();
-      }
+      },
+     simulatePrint: function(){
+       Android.startSVGTransmitter(false);
+       this.transition("idle");
+     }
     },
 
     settingNewEventName: {
@@ -125,7 +134,7 @@ var fsm = new machina.Fsm({
           this.emit('speech', 'Created event ' + eventNm + ' from ' + eventStartTimeFormatted + ' to ' + eventEndTimeFormatted);
           //create event in Android
           Android.createEvent(eventNm, eventStartTime.toISOString(), eventEndTime.toISOString());
-          this.transition('idle');
+          this.transition('printing');
 
         },
         back: function() {

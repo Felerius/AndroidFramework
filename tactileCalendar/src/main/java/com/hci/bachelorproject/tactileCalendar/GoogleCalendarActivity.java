@@ -46,6 +46,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.Toast;
@@ -118,11 +119,24 @@ public class GoogleCalendarActivity extends Activity
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.setWebContentsDebuggingEnabled(true);
+
         //activityLayout.addView(webView);
         checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, REQUEST_PERMISSION_ACCESS_COARSE_LOCATION);
 
-        //setContentView(activityLayout);
-
+        Button printButton = (Button) findViewById(R.id.printTrigger);
+        printButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                webView.loadUrl("javascript:handleSpeech('print');");
+            }
+        });
+        Button simulateButton= (Button) findViewById(R.id.simulateTrigger);
+        simulateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                webView.loadUrl("javascript:handleSpeech('simulate');");
+            }
+        });
         // Initialize credentials and service object.
         mCredential = GoogleAccountCredential.usingOAuth2(
                 getApplicationContext(), Arrays.asList(SCOPES))
@@ -142,6 +156,14 @@ public class GoogleCalendarActivity extends Activity
         mAccelLast = SensorManager.GRAVITY_EARTH;
 
 
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        if (this.webAppInterface!=null){
+            webAppInterface.stopInterface();
+        }
     }
 
     private void checkPermission(String permission, int requestCode) {
