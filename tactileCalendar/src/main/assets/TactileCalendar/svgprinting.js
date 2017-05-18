@@ -25,8 +25,17 @@ function getSVGDiff(){
 
 	var svg = document.getElementById("svg");
 	//get svg source.
+	removedItems = {};
     traverseDOM(svg);
     svgVersionNr+=1;
+    var elementsToRmCount = 0;
+    for (var el in removedItems){
+        if (removedItems.hasOwnProperty(el)){
+            elementsToRmCount += removedItems[el].length;
+        }
+    }
+    console.log(elementsToRmCount + " elements to remove");
+
     removeItemsTemporary();
     //removeVersionAttr(svg);
 	var serializer = new XMLSerializer();
@@ -47,7 +56,7 @@ function getSVGDiff(){
 
 function traverseDOM(element){
 
-	removedItems = {};
+
     if (element.getAttributeNS(linepodNS, 'version')==null){
         element.setAttributeNS(linepodNS, 'version', svgVersionNr);
     }
@@ -82,19 +91,25 @@ function traverseDOM(element){
 
 function removeItemsTemporary(){
 	removedItemsCopy = removedItems;
-    removedItems = {}
+    removedItems = {};
+    removedElementsCount = 0;
     for (var elementId in removedItemsCopy){
 
 		if (removedItemsCopy.hasOwnProperty(elementId)) {
 			removedItems[elementId] = [];
 			for (var i=0; i< removedItemsCopy[elementId].length;i++){
-			    console.log("element id " + elementId);
-			    console.log("element " + document.getElementById(elementId));
 
+			    console.log("removing element");
+			    console.log("parent:");
+                console.log(document.getElementById(elementId));
+                console.log("element:");
+                console.log(removedItemsCopy[elementId][i]);
 				removedItems[elementId].push(document.getElementById(elementId).removeChild(removedItemsCopy[elementId][i]));
+				removedElementsCount += 1;
 			}
 		}
 	}
+	console.log("removed " + removedElementsCount + " elements");
 }
 
 //this function and removeItemsTemporary are needed to get the diff between print-jobs.
@@ -118,10 +133,8 @@ function restoreDOM(){
 
 
 function simulateFirstPrint(){
-    var svg = document.getElementById("svg");
-    traverseDOM(svg); //every node needs attribute version
-    svgVersionNr+=1;
-    source = '<?xml version="1.0" standalone="no"?>\r\n' + "<svg></svg>";
+    getSVGDiff();
+    var source = '<?xml version="1.0" standalone="no"?>\r\n' + "<svg></svg>";
     console.log(source);
     var printJobUUID = generateUUID();
     console.log(printJobUUID);
