@@ -24,6 +24,7 @@ function parseJSONrequest(request){
         console.log("-------------");
         newEvents.push(event);
       }
+      initCalendar(newEvents);
       renderEvents(newEvents);
 }
 

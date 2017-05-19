@@ -8,7 +8,10 @@
 var timeScale = d3.scaleLinear()
 
 var dayScale = d3.scaleLinear()
-
+var days;
+var minHour;
+var maxHour;
+var dayBoxes;
 var svgTop = d3.select("body")
 .append("svg")
 .attr("width", paperWidth)
@@ -57,19 +60,9 @@ defs.append("pattern")
 		.attr("stroke-width", 2);
 
 
-
-
-
-//gets called from googleCalendar.js when events are obtained from API
-function renderEvents(events){
-
-
-
-    //add "level" attribute to each event for placing overlapping events
-    generateXLevels(events)
-
-    var minHour = getMinHour(events)
-    var maxHour = getMaxHour(events)
+function initCalendar(events){
+    minHour = getMinHour(events)
+    maxHour = getMaxHour(events)
     var hours = []
     for(let i = minHour; i<maxHour+1; i++) {
         hours.push(i)
@@ -96,7 +89,7 @@ function renderEvents(events){
         days.push(new Date(day))
     }
 
-    var dayBoxes = svg.selectAll(".dayBox")
+    dayBoxes = svg.selectAll(".dayBox")
     .data(days)
     .enter()
     .append("rect")
@@ -116,15 +109,48 @@ function renderEvents(events){
 
     dayBoxes.attrs(dayBoxAttrs)
 
+    //Add hour marks
+    	var dayGroups = svg.selectAll("g")
+    	.data(days)
+    	.enter()
+    	.append("g")
+    	.each(function(d, i) {
+    		d3.select(this).selectAll(".hourMarker")
+    		.data(hours.slice(0,-1)) //all but last hour
+    		.enter()
+    		.append("rect")
+    		.attr("class", "hourMarker")
+    		.attrs(hourMarkAttrs)
+    		.attr("x", function() {
+    			var xDiffPerDay = dayScale(daysSinceEpoch(days[1]))-dayScale(daysSinceEpoch(days[0]))
+    			return dayScale(daysSinceEpoch(d)) + (xDiffPerDay/2) + 40
+    		})
+    		.attr("y", function(h) {
+    			return timeScale(h*60)-7
+    		})
+    		.on("mouseover", handleMouseOverHourMark)
+    		.on("mouseout", cancelSpeech)
+    	});
+
+
+}
+
+
+//gets called from googleCalendar.js when events are obtained from API
+function renderEvents(events){
+
+
+
+    //add "level" attribute to each event for placing overlapping events
+    generateXLevels(events)
+
 
 	var eventBoxes = svg.selectAll(".eventBox")
 	//filter out allday events
 	.data(events.filter(function(e){return typeof e.start.dateTime !== "undefined"}))
 	.enter()
 	.append("rect")
-	.attr("class","eventBox");
-
-	eventBoxes
+	.attr("class","eventBox")
 	.attrs(eventBoxAttrs)
 	.attr("x", function(e) {
 		console.log("dayScale")
@@ -142,28 +168,6 @@ function renderEvents(events){
 	.on("mouseover", handleMouseOverEvent)
 	.on("mouseout", cancelSpeech);
 
-	//Add hour marks
-	var dayGroups = svg.selectAll("g")
-	.data(days)
-	.enter()
-	.append("g")
-	.each(function(d, i) {
-		d3.select(this).selectAll(".hourMarker")
-		.data(hours.slice(0,-1)) //all but last hour
-		.enter()
-		.append("rect")
-		.attr("class", "hourMarker")
-		.attrs(hourMarkAttrs)
-		.attr("x", function() {
-			var xDiffPerDay = dayScale(daysSinceEpoch(days[1]))-dayScale(daysSinceEpoch(days[0]))
-			return dayScale(daysSinceEpoch(d)) + (xDiffPerDay/2) + 40
-		})
-		.attr("y", function(h) {
-			return timeScale(h*60)-7
-		})
-		.on("mouseover", handleMouseOverHourMark)
-		.on("mouseout", cancelSpeech)
-	});
 
 
 }
