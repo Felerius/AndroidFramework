@@ -1,0 +1,3 @@
+[submodule "tactileCalendar/src/main/assets/TactileCalendar"]
+	path = tactileCalendar/src/main/assets/TactileCalendar
+	url = git@github.com:boeckhoff/TactileCalendar.git
