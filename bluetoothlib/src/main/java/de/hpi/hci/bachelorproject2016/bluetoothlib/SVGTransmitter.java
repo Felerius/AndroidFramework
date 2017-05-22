@@ -62,7 +62,7 @@ public class SVGTransmitter {
         tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int i) {
-                speak(context.getString(R.string.connecting_laser_plotter));
+                //speak(context.getString(R.string.connecting_laser_plotter));
             }
         });
 

@@ -19,6 +19,11 @@ import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
 public class JSAppInterface {
     protected Context mContext;
     protected SVGTransmitter svgTransmitter;
+
+    public TextToSpeech getTts() {
+        return tts;
+    }
+
     protected TextToSpeech tts;
 
 

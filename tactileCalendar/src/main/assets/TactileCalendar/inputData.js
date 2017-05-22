@@ -113,6 +113,22 @@ function getInputData(x1,y1,x2,y2,eventType1,eventType2){
 
 }
 
+
+function getInputDataDebug(x1, y1, x2, y2, eventType1, eventType2){
+     console.log(document.elementFromPoint(x1,y1));
+        console.log(eventType1);
+        console.log(eventType2);
+
+        checkEventType(eventType1,x1,y1);
+
+        if (lastx2!=x2 && lasty2!=y2){
+            checkEventType(eventType2,x2,y2);
+            lastx2 = x2;
+            lasty2 = y2;
+        }
+
+}
+
 function checkEventType(eventType,x,y){
 
     switch(eventType){

@@ -15,6 +15,18 @@ month[11] = "December";
 weekDays = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
 
 
+function formatAMPM(date) {
+  var hours = date.getHours();
+  var minutes = date.getMinutes();
+  var ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  minutes = minutes < 10 ? '0'+minutes : minutes;
+  var strTime = weekDays[(date.getDay()+6)%7] + " " + hours + ':' + minutes + ' ' + ampm;
+  return strTime;
+}
+
+
 
 function lengthOfEvent(e) {
   return endOf(e) - startOf(e)
@@ -87,15 +99,3 @@ function getMaxHour(events) {
 
   return maxHour
 }
-
-function formatAMPM(date) {
-  var hours = date.getHours();
-  var minutes = date.getMinutes();
-  var ampm = hours >= 12 ? 'pm' : 'am';
-  hours = hours % 12;
-  hours = hours ? hours : 12; // the hour '0' should be '12'
-  minutes = minutes < 10 ? '0'+minutes : minutes;
-  var strTime = weekDays[(date.getDay()+6)%7] + " " + hours + ':' + minutes + ' ' + ampm;
-  return strTime;
-}
-

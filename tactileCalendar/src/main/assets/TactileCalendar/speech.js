@@ -171,7 +171,7 @@ function handleSpeech(speechInput){
         fsm.handle("options");
     } else if (speechInput.includes("print")){
         fsm.handle("print");
-    }  else if (speechInput.includes("simulate")){
+    }  else if (speechInput.includes("start") || speechInput.includes("simulate")){
         fsm.handle("simulatePrint");
     } else if (speechInput.includes("test")){
           endDate = new Date();

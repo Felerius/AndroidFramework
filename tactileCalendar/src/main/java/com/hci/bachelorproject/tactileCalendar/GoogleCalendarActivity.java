@@ -423,9 +423,13 @@ public class GoogleCalendarActivity extends Activity
         float delta = mAccelCurrent - mAccelLast;
         mAccel = mAccel * 0.9f + delta; // perform low-cut filter
 
+
         if (mAccel > 12 && System.currentTimeMillis() - timeOfLastShakeEvent >5000) {
             //Toast toast = Toast.makeText(getApplicationContext(), "Gerät wurde geschaket.", Toast.LENGTH_LONG);
             //toast.show();
+            if (webAppInterface.getTts()!=null){
+                webAppInterface.getTts().stop();
+            }
             timeOfLastShakeEvent = System.currentTimeMillis();
             promptSpeechInput();
         }

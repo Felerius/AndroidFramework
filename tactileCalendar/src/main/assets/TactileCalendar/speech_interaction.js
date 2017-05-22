@@ -18,10 +18,11 @@ var fsm = new machina.Fsm({
      },
      simulatePrint: function(){
        Android.startSVGTransmitter(false);
-       this.transition("idle");
+       this.handle("printing");
      },
      options: function(){
-       this.emit('speech', "Do you want to print your calendar now then say 'print'. Just don't forget to check that your Linepod is turned on, has paper inserted and that it's lid is closed.");
+       //this.emit('speech', "Do you want to print your calendar now then say 'print'. Just don't forget to check that your Linepod is turned on, has paper inserted and that it's lid is closed.");
+       this.emit('speech', "This app assumes that you already printed your calendar of the current week. If you want to interact with it now check that your Linepod has paper inserted, then shake your phone to open the speech recognition and then say 'start'.");
 
      },
      otherInput: function(input) {
