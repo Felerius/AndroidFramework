@@ -67,7 +67,7 @@ public class CalendarWebAppInterface extends JSAppInterface {
                                 "      \"and that the lid is closed if you want to print. Otherwise, if you already havwe a printed calendar you can Also you can say 'options' or 'help' at anytime if you're stuck and don't know what to do. "
                         , TextToSpeech.QUEUE_ADD,null);*/
                 tts.speak("Welcome to your tactile calendar. This app supports speech recognition that you can start by shaking your phone. It assumes that you already have a printed tactile calendar of the current week." +
-                        "      + \"If you want to interact with your calendar now, insert your calendar in the Linepod, pull it in by pressing the second button in the upper-right corner on the Linepod and then say 'start' after opening the speech-recognition. Also you can say 'options' or 'help' at anytime if you're stuck and don't know what to do. "
+                        " If you want to interact with your calendar now, insert your calendar in the Linepod, pull it in by pressing the second button in the upper-right corner on the Linepod and then say 'start' after opening the speech-recognition. Also you can say 'options' or 'help' at anytime if you're stuck and don't know what to do. "
                 , TextToSpeech.QUEUE_ADD,null,"");
 
             }

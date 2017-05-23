@@ -534,9 +534,9 @@ public class GoogleCalendarActivity extends Activity
                     ex.printStackTrace();
                 }
                 //String html = "file:///android_asset/TactileCalendar/calendar.html";
-                webView.loadDataWithBaseURL("file:///android_asset/TactileCalendar/", html, "text/html", "utf-8", ""); //if no WebServer needed and file server is enough
+                webView.loadDataWithBaseURL("file:///android_asset/TactileCalendar/src", html, "text/html", "utf-8", ""); //if no WebServer needed and file server is enough
                 Log.i("CalendarAct","loaded");
-                webView.loadUrl("file:///android_asset/TactileCalendar/calendar.html");
+                webView.loadUrl("file:///android_asset/TactileCalendar/src/Android/calendar.html");
 
 
             }
