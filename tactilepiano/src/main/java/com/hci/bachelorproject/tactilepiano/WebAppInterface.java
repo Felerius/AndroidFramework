@@ -20,7 +20,6 @@ import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
  */
 
 public class WebAppInterface extends JSAppInterface {
-    Context mContext;
     private SoundPool soundPool;
     private int sound_c,sound_d, sound_e, sound_f, sound_g, sound_a, sound_b, sound_c5, sound_cis, sound_dis, sound_fis, sound_gis, sound_ais;
     private int lastToneVal = -1;
@@ -28,7 +27,7 @@ public class WebAppInterface extends JSAppInterface {
 
     /** Instantiate the interface and set the context */
     WebAppInterface(Context c, WebView webView) {
-        super(c,webView);
+        super(c,webView,true);
 
         lastTimeStamp = System.currentTimeMillis();
         soundPool = new SoundPool.Builder().setMaxStreams(5).build();
