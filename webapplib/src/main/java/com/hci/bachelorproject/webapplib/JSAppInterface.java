@@ -1,7 +1,10 @@
 package com.hci.bachelorproject.webapplib;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
+import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
@@ -66,6 +69,7 @@ public class JSAppInterface {
         //svgTransmitter.sendToLaserPlotter(versionNr+"");
         svgTransmitter.sendToLaserPlotter(byteArray);
     }
+
 
     //framework method
     @JavascriptInterface

@@ -12,7 +12,7 @@ import android.webkit.WebView;
 public class LinepodBaseActivity extends AppCompatActivity {
 
     protected WebView webView;
-
+    protected String webAppUrl = "file:///android_asset/index.html";
     //this is the key part of every Linepod-application
     protected final String webAppInterfaceName = "Android";
     protected JSAppInterface webAppInterface;
@@ -53,6 +53,8 @@ public class LinepodBaseActivity extends AppCompatActivity {
                 }
 
                 webView.addJavascriptInterface(webAppInterface, webAppInterfaceName);
+                webView.loadDataWithBaseURL("file:///android_asset/", "", "text/html", "utf-8", "");
+                webView.loadUrl(webAppUrl);
             }
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
