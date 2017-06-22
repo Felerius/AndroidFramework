@@ -20,6 +20,16 @@ import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
  */
 
 public class JSAppInterface {
+    protected OnTriggerSpeechCallback onTriggerSpeechCallback;
+
+    public OnTriggerSpeechCallback getOnTriggerSpeechCallback() {
+        return onTriggerSpeechCallback;
+    }
+
+    public void setOnTriggerSpeechCallback(OnTriggerSpeechCallback onTriggerSpeechCallback) {
+        this.onTriggerSpeechCallback = onTriggerSpeechCallback;
+    }
+
     protected Context mContext;
     protected SVGTransmitter svgTransmitter;
 
@@ -54,6 +64,13 @@ public class JSAppInterface {
     }
 
     //framework method
+    @JavascriptInterface
+    public void triggerSpeechInput(){
+        onTriggerSpeechCallback.promptSpeechInput();
+    }
+
+
+        //framework method
     @JavascriptInterface
     public void sendSVGToLaserPlotter(String svgString, String printJobUUID){
         Log.i("WebAppInterface", "Sending to plotter " + svgString);

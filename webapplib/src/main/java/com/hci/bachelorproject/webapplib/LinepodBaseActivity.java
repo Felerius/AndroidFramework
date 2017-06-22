@@ -1,15 +1,28 @@
 package com.hci.bachelorproject.webapplib;
 
 import android.Manifest;
+import android.accounts.AccountManager;
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.webkit.WebView;
+import android.widget.Toast;
 
-public class LinepodBaseActivity extends AppCompatActivity {
+import java.util.ArrayList;
+
+public class LinepodBaseActivity extends AppCompatActivity implements OnTriggerSpeechCallback{
+
+    private final int REQ_CODE_SPEECH_INPUT = 100;
+
 
     protected WebView webView;
     protected String webAppUrl = "file:///android_asset/index.html";
@@ -43,13 +56,46 @@ public class LinepodBaseActivity extends AppCompatActivity {
     }
 
 
+    public void promptSpeechInput() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
+                "listening");
+        try {startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);
+        } catch (ActivityNotFoundException a) {
+            Toast.makeText(this,
+                    "speech not supported",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(
+            int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch(requestCode) {
+            case REQ_CODE_SPEECH_INPUT: {
+                if (resultCode == RESULT_OK && null != data) {
+
+                    ArrayList<String> result = data
+                            .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+                    webView.loadUrl("javascript:handleSpeech('" + result.get(0) + "');");
+                }
+                break;
+            }
+        }
+    }
+
+
 
     protected void checkPermission(String permission, int requestCode) {
         //if BT-permission is allowed, create webview
         if (requestCode == REQUEST_PERMISSION_ACCESS_COARSE_LOCATION){
             if (ContextCompat.checkSelfPermission(getApplicationContext(),Manifest.permission.ACCESS_COARSE_LOCATION)== PackageManager.PERMISSION_GRANTED){
                 if (webAppInterface==null){
-                    webAppInterface = new JSAppInterface(getApplicationContext(),webView,false);
+                    webAppInterface = new JSAppInterface(getApplicationContext(),webView,true);
                 }
 
                 webView.addJavascriptInterface(webAppInterface, webAppInterfaceName);
@@ -61,7 +107,7 @@ public class LinepodBaseActivity extends AppCompatActivity {
             if (ContextCompat.checkSelfPermission(getApplicationContext(),
                     permission)
                     != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(LinepodBaseActivity.this, new String[]{permission},
+                ActivityCompat.requestPermissions(this, new String[]{permission},
                         requestCode);
 
             }
