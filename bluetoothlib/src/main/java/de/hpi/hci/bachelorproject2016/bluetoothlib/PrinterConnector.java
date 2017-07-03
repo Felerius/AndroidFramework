@@ -70,6 +70,7 @@ public class PrinterConnector  {
                 BluetoothDevice d = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
                 Log.d("Bluetooth","Bluetooth device found " + d.getName());
+                Log.d("Bluetooth", "name to be search for " + deviceName);
                 if (d.getName()!=null){
                     if (d.getName().contains(deviceName)) {
                         adapter.cancelDiscovery();

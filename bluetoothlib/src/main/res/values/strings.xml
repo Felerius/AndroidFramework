@@ -5,5 +5,5 @@
     <string name="could_not_connect">Refused connection to linepod</string>
     <string name="connecting_laser_plotter">Connecting to linepod</string>
     <string name="sending_img_laser_plotter">Sending svg to linepod</string>
-    <string name="bluetooth_device_name">raspberrypi</string>
+    <string name="bluetooth_device_name">linepod-photobooth</string>
 </resources>
