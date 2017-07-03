@@ -126,6 +126,7 @@ public class SVGTransmitter {
                             }
                         };
                         webView.post(sendInputDataOnUiThread);
+
                         break;
                     case 1:
                         final int status = Integer.valueOf(array[1]);

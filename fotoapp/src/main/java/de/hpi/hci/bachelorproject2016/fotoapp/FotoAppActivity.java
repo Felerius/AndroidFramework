@@ -197,7 +197,8 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 
 		//Shake listener instantiation
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-		mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+		mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+				SensorManager.SENSOR_DELAY_NORMAL);
 		mAccel = 0.00f;
 		mAccelCurrent = SensorManager.GRAVITY_EARTH;
 		mAccelLast = SensorManager.GRAVITY_EARTH;
@@ -704,10 +705,7 @@ public class FotoAppActivity extends Activity implements SpeechRecognitionHandle
 		mAccelCurrent = (float) Math.sqrt((double) (x*x + y*y + z*z));
 		float delta = mAccelCurrent - mAccelLast;
 		mAccel = mAccel * 0.9f + delta; // perform low-cut filter
-		Log.d("Shaking", "shaked " + mAccel);
 		if (mAccel > 12 && System.currentTimeMillis() - timeOfLastShakeEvent >5000) {
-			//Toast toast = Toast.makeText(getApplicationContext(), "Gerät wurde geschaket.", Toast.LENGTH_LONG);
-			//toast.show();
 			timeOfLastShakeEvent = System.currentTimeMillis();
 				activateSpeechInput();
 			}

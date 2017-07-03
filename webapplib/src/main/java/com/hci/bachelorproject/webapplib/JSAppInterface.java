@@ -1,7 +1,10 @@
 package com.hci.bachelorproject.webapplib;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
+import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
@@ -17,6 +20,16 @@ import de.hpi.hci.bachelorproject2016.bluetoothlib.SVGTransmitter;
  */
 
 public class JSAppInterface {
+    protected OnTriggerSpeechCallback onTriggerSpeechCallback;
+
+    public OnTriggerSpeechCallback getOnTriggerSpeechCallback() {
+        return onTriggerSpeechCallback;
+    }
+
+    public void setOnTriggerSpeechCallback(OnTriggerSpeechCallback onTriggerSpeechCallback) {
+        this.onTriggerSpeechCallback = onTriggerSpeechCallback;
+    }
+
     protected Context mContext;
     protected SVGTransmitter svgTransmitter;
 
@@ -52,6 +65,13 @@ public class JSAppInterface {
 
     //framework method
     @JavascriptInterface
+    public void triggerSpeechInput(){
+        onTriggerSpeechCallback.promptSpeechInput();
+    }
+
+
+        //framework method
+    @JavascriptInterface
     public void sendSVGToLaserPlotter(String svgString, String printJobUUID){
         Log.i("WebAppInterface", "Sending to plotter " + svgString);
         Toast.makeText(mContext, "Printing SVG", Toast.LENGTH_SHORT).show();
@@ -66,6 +86,7 @@ public class JSAppInterface {
         //svgTransmitter.sendToLaserPlotter(versionNr+"");
         svgTransmitter.sendToLaserPlotter(byteArray);
     }
+
 
     //framework method
     @JavascriptInterface
