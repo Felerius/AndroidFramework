@@ -27,8 +27,4 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile 'com.android.support:appcompat-v7:25.2.0'
-<<<<<<< HEAD
-    testCompile 'junit:junit:4.12'
-=======
->>>>>>> 821aea33331116b98abe1faeea3fe13088c11653
 }
