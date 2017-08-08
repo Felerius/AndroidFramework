@@ -22,7 +22,7 @@ import java.util.ArrayList;
 public class LinepodBaseActivity extends AppCompatActivity implements OnTriggerSpeechCallback{
 
     private final int REQ_CODE_SPEECH_INPUT = 100;
-
+    private boolean speechRecognitionListening = false;
 
     protected WebView webView;
     protected String webAppUrl = "file:///android_asset/index.html";
@@ -63,7 +63,11 @@ public class LinepodBaseActivity extends AppCompatActivity implements OnTriggerS
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT,
                 "listening");
-        try {startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);
+        try {
+            if (speechRecognitionListening == false){
+                speechRecognitionListening = true;
+                startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);
+            }
         } catch (ActivityNotFoundException a) {
             Toast.makeText(this,
                     "speech not supported",
@@ -78,7 +82,7 @@ public class LinepodBaseActivity extends AppCompatActivity implements OnTriggerS
         switch(requestCode) {
             case REQ_CODE_SPEECH_INPUT: {
                 if (resultCode == RESULT_OK && null != data) {
-
+                    speechRecognitionListening = false;
                     ArrayList<String> result = data
                             .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                     webView.loadUrl("javascript:handleSpeech('" + result.get(0) + "');");
