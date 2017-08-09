@@ -54,8 +54,8 @@ public class SVGTransmitter {
     public SVGTransmitter(Context context, WebView webView){
         this.webView = webView;
         this.context = context;
-        initTTS(context);
         initPrinterConnector();
+        initTTS(context);
     }
 
     private void initTTS(final Context context){
