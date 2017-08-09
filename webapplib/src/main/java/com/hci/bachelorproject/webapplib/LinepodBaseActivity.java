@@ -81,8 +81,9 @@ public class LinepodBaseActivity extends AppCompatActivity implements OnTriggerS
         super.onActivityResult(requestCode, resultCode, data);
         switch(requestCode) {
             case REQ_CODE_SPEECH_INPUT: {
+                speechRecognitionListening = false;
                 if (resultCode == RESULT_OK && null != data) {
-                    speechRecognitionListening = false;
+
                     ArrayList<String> result = data
                             .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                     webView.loadUrl("javascript:handleSpeech('" + result.get(0) + "');");
